@@ -6,7 +6,7 @@ let storeData = null;
 let cart = {}; // { 'prod-1': { item: {id, name, price, ...}, quantity: 1, total: 18.50 }, ... }
 
 // --- CONFIGURAÇÃO CHAVE ---
-const CLIENT_BIN_ID = 'SUA_BIN_ID_DE_TESTE'; // SUBSTITUA PELO BIN ID REAL DO JSONBIN
+const CLIENT_BIN_ID = '68e36776ae596e708f07b93a'; // SUBSTITUA PELO BIN ID REAL DO JSONBIN
 const DATA_CACHE_KEY = 'labsystem_totem_cache'; 
 const WHATSAPP_BASE_URL = 'https://api.whatsapp.com/send';
 
