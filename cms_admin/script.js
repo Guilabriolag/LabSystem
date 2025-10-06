@@ -1,10 +1,10 @@
 // ====================================================================
-// Serverless-System | CMS ADMIN - LÓGICA PRINCIPAL (script.js)
+// Serverless-System | CMS ADMIN - LÓGICA PRINCIPAL (script.js) - V2.0
 // ====================================================================
 
 /**
  * Estrutura Unificada de Dados Padrão (Default Data)
- * Usada se não houver dados no localStorage.
+ * Adicionado: storeName, address e cobertura[]
  */
 const defaultData = {
     // --- 1. CONFIGURAÇÃO DE PUBLICAÇÃO (CMS) ---
@@ -14,6 +14,8 @@ const defaultData = {
         storeStatus: 'open', // open | closed
         whatsapp: '5511999998888',
         lowStockThreshold: 5,
+        storeName: 'LabSystem Store', // NOVO: Nome da Loja
+        address: 'Rua Exemplo, 123 - Cidade, UF', // NOVO: Endereço da Loja
     },
 
     // --- 2. CUSTOMIZAÇÃO (APARÊNCIA) ---
@@ -40,6 +42,12 @@ const defaultData = {
         bankDetails: '',
         bitcoinLightning: ''
     },
+    
+    // --- 5. COBERTURA DE ENTREGA (NOVO) ---
+    cobertura: [
+        { id: 'area-1', name: 'Centro', taxa: 5.00, tempo: 30 },
+        { id: 'area-2', name: 'Bairro Exemplo', taxa: 8.50, tempo: 45 }
+    ],
 };
 
 
@@ -55,10 +63,10 @@ class StoreManager {
         this.loadLocalData();
         this.renderFormFields(); 
         this.renderItemManagement(); 
+        this.renderCoverage(); // NOVO: Renderiza a Cobertura
         this.checkLowStockAlerts(); 
         this.switchTab('publicar'); 
 
-        // Garante que os Event Listeners sejam configurados, mesmo que haja falha no DOM
         try {
             this.setupEventListeners();
         } catch (e) {
@@ -75,7 +83,15 @@ class StoreManager {
         try {
             const savedData = localStorage.getItem(this.dataKey);
             if (savedData) {
-                this.data = JSON.parse(savedData);
+                // Tenta mesclar novos campos, caso o usuário tenha dados antigos
+                let loadedData = JSON.parse(savedData);
+                this.data = { ...JSON.parse(JSON.stringify(defaultData)), ...loadedData }; 
+                // Garante que sub-objetos também sejam mesclados
+                this.data.configuracoes = { ...defaultData.configuracoes, ...loadedData.configuracoes };
+                this.data.customizacao = { ...defaultData.customizacao, ...loadedData.customizacao };
+                this.data.pagamento = { ...defaultData.pagamento, ...loadedData.pagamento };
+                // Garante que o array de cobertura exista
+                this.data.cobertura = loadedData.cobertura || defaultData.cobertura;
             } else {
                 this.data = JSON.parse(JSON.stringify(defaultData)); 
             }
@@ -89,7 +105,7 @@ class StoreManager {
         try {
             this.collectDataFromForms(); 
             localStorage.setItem(this.dataKey, JSON.stringify(this.data));
-            this.checkLowStockAlerts(); // Atualiza alerta após salvar
+            this.checkLowStockAlerts();
             this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
         } catch (e) {
             this.toast('❌ Erro ao salvar dados localmente.', 'bg-red-500');
@@ -105,6 +121,7 @@ class StoreManager {
         this.collectPublicationFields();
         this.collectCustomizationFields();
         this.collectDadosLojaFields();
+        // A cobertura é salva diretamente pelos métodos de CRUD
     }
 
     collectPublicationFields() {
@@ -113,6 +130,11 @@ class StoreManager {
     }
 
     collectDadosLojaFields() {
+        // NOVOS CAMPOS
+        this.data.configuracoes.storeName = document.getElementById('storeName')?.value || 'LabSystem Store';
+        this.data.configuracoes.address = document.getElementById('address')?.value || '';
+        
+        // CAMPOS EXISTENTES
         this.data.configuracoes.storeStatus = document.getElementById('storeStatus')?.value || 'closed';
         this.data.configuracoes.whatsapp = document.getElementById('whatsapp')?.value || '';
         
@@ -140,8 +162,10 @@ class StoreManager {
             document.getElementById('masterKey').value = d.configuracoes.masterKey || '';
         }
 
-        // Dados Operacionais (Loja)
+        // Dados Operacionais (Loja) - NOVOS E EXISTENTES
         if (document.getElementById('storeStatus')) {
+            document.getElementById('storeName').value = d.configuracoes.storeName || 'LabSystem Store'; // NOVO
+            document.getElementById('address').value = d.configuracoes.address || ''; // NOVO
             document.getElementById('storeStatus').value = d.configuracoes.storeStatus || 'closed';
             document.getElementById('whatsapp').value = d.configuracoes.whatsapp || '';
         }
@@ -162,9 +186,105 @@ class StoreManager {
     }
     
     // ====================================================================
-    // MÉTODOS DE SINCRONIZAÇÃO REMOTA (JSONBIN)
+    // MÉTODOS DE COBERTURA DE ENTREGA (CRUD)
     // ====================================================================
 
+    renderCoverage() {
+        const tableBody = document.getElementById('coverageTableBody');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = '';
+        this.data.cobertura.forEach(area => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td class="py-2 px-4 border-b">${area.name}</td>
+                <td class="py-2 px-4 border-b">R$ ${area.taxa.toFixed(2).replace('.', ',')}</td>
+                <td class="py-2 px-4 border-b">${area.tempo} min</td>
+                <td class="py-2 px-4 border-b text-center space-x-2">
+                    <button onclick="storeManager.editCoverage('${area.id}')" class="text-blue-500 hover:text-blue-700">Editar</button>
+                    <button onclick="storeManager.deleteCoverage('${area.id}')" class="text-red-500 hover:text-red-700">Excluir</button>
+                </td>
+            `;
+        });
+    }
+
+    openCoverageModal(coverageId = null) {
+        const modal = document.getElementById('coverageModal');
+        const form = document.getElementById('coverageForm');
+        
+        form.reset();
+        document.getElementById('coverageId').value = '';
+        document.getElementById('coverageModalTitle').textContent = 'Adicionar Nova Área';
+
+        if (coverageId) {
+            const area = this.data.cobertura.find(a => a.id === coverageId);
+            if (area) {
+                document.getElementById('coverageModalTitle').textContent = 'Editar Área';
+                document.getElementById('coverageId').value = area.id;
+                document.getElementById('coverageNameModal').value = area.name;
+                document.getElementById('coverageTaxaModal').value = area.taxa;
+                document.getElementById('coverageTempoModal').value = area.tempo;
+            }
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    closeCoverageModal() {
+        document.getElementById('coverageModal').classList.add('hidden');
+    }
+
+    saveCoverage() {
+        const coverageId = document.getElementById('coverageId').value;
+        const name = document.getElementById('coverageNameModal').value.trim();
+        const taxa = parseFloat(document.getElementById('coverageTaxaModal').value);
+        const tempo = parseInt(document.getElementById('coverageTempoModal').value);
+        
+        if (!name || isNaN(taxa) || isNaN(tempo) || taxa < 0 || tempo <= 0) {
+            this.toast('Preencha todos os campos da Cobertura corretamente.', 'bg-yellow-500');
+            return;
+        }
+
+        const areaData = {
+            id: coverageId || 'area-' + Date.now(),
+            name,
+            taxa,
+            tempo,
+        };
+        
+        if (coverageId) {
+            const index = this.data.cobertura.findIndex(a => a.id === coverageId);
+            if (index !== -1) {
+                this.data.cobertura[index] = areaData;
+            }
+        } else {
+            this.data.cobertura.push(areaData);
+        }
+
+        this.saveLocalData();
+        this.renderCoverage();
+        this.closeCoverageModal();
+        this.toast('Área de cobertura salva!', 'bg-green-500');
+    }
+
+    editCoverage(coverageId) {
+        this.openCoverageModal(coverageId);
+    }
+
+    deleteCoverage(coverageId) {
+        if (!confirm('Tem certeza que deseja excluir esta área de cobertura?')) return;
+        
+        this.data.cobertura = this.data.cobertura.filter(a => a.id !== coverageId);
+        this.saveLocalData();
+        this.renderCoverage();
+        this.toast('Área de cobertura excluída.', 'bg-red-500');
+    }
+
+    // ====================================================================
+    // SINCRONIZAÇÃO, ITENS, BACKUP E UTILIDADES (MANTIDOS)
+    // ====================================================================
+    
+    // (MÉTODOS publishData, renderItemManagement, addCategory, deleteCategory, etc., mantidos iguais)
     async publishData() {
         this.collectDataFromForms(); 
 
@@ -202,10 +322,6 @@ class StoreManager {
         }
     }
 
-    // ====================================================================
-    // MÉTODOS DE GERENCIAMENTO DE ITENS (CRUD)
-    // ====================================================================
-    
     renderItemManagement() {
         this.renderCategoriesList();
         this.renderProductsTable();
@@ -363,10 +479,6 @@ class StoreManager {
         this.renderProductsTable();
         this.toast('Produto excluído.', 'bg-red-500');
     }
-    
-    // ====================================================================
-    // MÉTODOS DE BACKUP/RESTORE (LOCAL)
-    // ====================================================================
 
     exportData() {
         this.collectDataFromForms(); 
@@ -408,6 +520,7 @@ class StoreManager {
                         this.saveLocalData(); 
                         this.renderFormFields(); 
                         this.renderItemManagement(); 
+                        this.renderCoverage(); // NOVO: Recarrega a Cobertura
                         this.toast('🎉 Dados importados com sucesso! Não esqueça de PUBLICAR.', 'bg-indigo-500');
                     }
                 } else {
@@ -419,10 +532,6 @@ class StoreManager {
         };
         reader.readAsText(file);
     }
-
-    // ====================================================================
-    // MÉTODOS DE ALERTA DE ESTOQUE
-    // ====================================================================
 
     checkLowStockAlerts() {
         const alertContainer = document.getElementById('lowStockAlerts');
@@ -442,11 +551,6 @@ class StoreManager {
         }
     }
 
-
-    // ====================================================================
-    // MÉTODOS DE UI E UTILIDADES
-    // ====================================================================
-    
     toast(message, className = 'bg-gray-800') {
         const toastEl = document.createElement('div');
         toastEl.className = `fixed bottom-4 right-4 text-white p-3 rounded-lg shadow-xl ${className} z-50 transition-opacity duration-300`;
@@ -482,23 +586,29 @@ class StoreManager {
         document.getElementById('saveBtn')?.addEventListener('click', () => this.saveLocalData());
         document.getElementById('publishBtn')?.addEventListener('click', () => this.publishData());
         
-        // Event Listeners para abas de navegação (principal fonte do problema)
-        // O uso do forEach e do addEventListener é o padrão, mas a garantia de que o DOM está pronto é crucial.
+        // Event Listeners para abas de navegação
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.switchTab(e.currentTarget.getAttribute('data-tab'));
             });
         });
+        
+        // Event Listener para formulário do modal de cobertura
+        const coverageForm = document.getElementById('coverageForm');
+        if(coverageForm) {
+            coverageForm.onsubmit = (e) => {
+                e.preventDefault();
+                this.saveCoverage();
+            };
+        }
     }
 }
 
 // ====================================================================
-// INICIALIZAÇÃO ROBUSTA (Correção Definitiva para o Problema das Abas)
-// O script só começa a instanciar e anexar eventos quando o HTML está pronto.
+// INICIALIZAÇÃO ROBUSTA
 // ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Colocamos o objeto na window para que possa ser acessado pelo HTML (ex: onclick="storeManager.addCategory()")
     window.storeManager = new StoreManager();
     window.storeManager.init(); 
 });
