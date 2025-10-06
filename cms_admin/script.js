@@ -505,4 +505,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // ...
     window.storeManager = new StoreManager();
     window.storeManager.init(); 
+    // DENTRO da classe StoreManager no método init()
+init() {
+    this.loadLocalData();
+    this.setupEventListeners();
+    this.renderFormFields(); 
+    this.renderItemManagement(); 
+    this.checkLowStockAlerts(); // NOVO: Checa alertas na inicialização
+    this.switchTab('publicar'); 
+}
+    // DENTRO da classe StoreManager no método saveLocalData()
+saveLocalData() {
+    // ... código de salvamento
+    
+    // CHAMADA NOVA:
+    this.checkLowStockAlerts(); // Atualiza alerta após salvar
+    this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
+
+    // ... código de tratamento de erro
+}
+    
 });
