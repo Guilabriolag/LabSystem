@@ -1,10 +1,10 @@
 // ====================================================================
 // Serverless-System | CMS ADMIN - LÓGICA PRINCIPAL (script.js)
-// Arquivo Unificado: Persistência Local, JSONBin e Gerenciamento de Itens
 // ====================================================================
 
 /**
  * Estrutura Unificada de Dados Padrão (Default Data)
+ * Esta estrutura será usada se não houver nada no localStorage.
  */
 const defaultData = {
     // --- 1. CONFIGURAÇÃO DE PUBLICAÇÃO (CMS) ---
@@ -18,10 +18,10 @@ const defaultData = {
 
     // --- 2. CUSTOMIZAÇÃO (APARÊNCIA) ---
     customizacao: {
-        colorPrimary: '#10B981', 
-        colorSecondary: '#059669',
+        colorPrimary: '#10B981', // Cor Padrão: Verde Esmeralda
+        colorSecondary: '#059669', 
         backgroundColor: '#f9f9f9',
-        logoUrl: 'https://via.placeholder.com/150x50/10B981/ffffff?text=LOGO',
+        logoUrl: 'https://via.placeholder.com/150x50/10B981/ffffff?text=LabSystem',
     },
 
     // --- 3. ITENS E CARDÁPIO (TOTEM) ---
@@ -30,29 +30,33 @@ const defaultData = {
         { id: 'cat-2', name: 'Hambúrgueres' }
     ],
     produtos: [
-        { id: 'prod-1', name: 'X-Salada Clássico', price: 18.50, stock: 50, categoryId: 'cat-2', imageUrl: 'https://via.placeholder.com/300x200?text=X-Salada' },
-        { id: 'prod-2', name: 'Batata Média', price: 8.00, stock: 100, categoryId: 'cat-2', imageUrl: 'https://via.placeholder.com/300x200?text=Batata' }
+        { id: 'prod-1', name: 'X-Salada Clássico', price: 18.50, stock: 50, categoryId: 'cat-2', imageUrl: 'https://via.placeholder.com/300x200/FFCC00/000000?text=X-Salada' },
+        { id: 'prod-2', name: 'Batata Média', price: 8.00, stock: 100, categoryId: 'cat-2', imageUrl: 'https://via.placeholder.com/300x200/DA291C/ffffff?text=Batata' }
     ],
 
     // --- 4. DADOS DE PAGAMENTO ---
     pagamento: {
         pixKey: 'sua-chave-pix-aqui',
-        bankDetails: 'Banco X, Ag 0001, C/C 12345-6',
-        bitcoinLightning: '' 
+        bankDetails: '',
+        bitcoinLightning: ''
     },
 };
 
 
 class StoreManager {
     constructor() {
-        this.dataKey = 'labsystem_store_data'; 
+        this.dataKey = 'labsystem_store_data'; // Chave mestra no localStorage
         this.data = {};
-        // O init agora é chamado no DOMContentLoaded
+        this.currentProductId = null; // Para rastrear o produto em edição
+    }
+
+    // Inicializa: Tenta carregar dados locais, configura eventos e renderiza a UI.
+    init() {
         this.loadLocalData();
         this.setupEventListeners();
         this.renderFormFields(); 
-        this.renderItemManagement();
-        this.switchTab('publicar'); 
+        this.renderItemManagement(); 
+        this.switchTab('publicar'); // Inicia na aba mais crítica
     }
 
     // ====================================================================
@@ -65,6 +69,7 @@ class StoreManager {
             if (savedData) {
                 this.data = JSON.parse(savedData);
             } else {
+                // Cria uma cópia profunda dos dados default para não modificar a constante
                 this.data = JSON.parse(JSON.stringify(defaultData)); 
             }
         } catch (e) {
@@ -75,6 +80,7 @@ class StoreManager {
 
     saveLocalData() {
         try {
+            // Garante que o estado do formulário esteja na memória antes de salvar
             this.collectDataFromForms(); 
             localStorage.setItem(this.dataKey, JSON.stringify(this.data));
             this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
@@ -83,17 +89,17 @@ class StoreManager {
             console.error('Erro ao salvar no LocalStorage:', e);
         }
     }
-
+    
     // ====================================================================
     // MÉTODOS DE COLETA DE DADOS DO FORMULÁRIO (INPUT)
     // ====================================================================
-    
-    // Função Mestra: Coleta TODOS os dados do formulário e atualiza this.data
+
+    // Função Mestra: Coleta TODOS os dados visíveis do formulário e atualiza this.data
     collectDataFromForms() {
         this.collectPublicationFields();
         this.collectCustomizationFields();
         this.collectDadosLojaFields();
-        // Não precisa coletar Itens, pois eles são manipulados diretamente pelas funções CRUD (addCategory, saveProduct, etc.)
+        // Os itens (produtos/categorias) são manipulados diretamente pelos métodos CRUD, não via esta função.
     }
 
     collectPublicationFields() {
@@ -115,45 +121,47 @@ class StoreManager {
         this.data.customizacao.colorSecondary = document.getElementById('colorSecondary')?.value || '#000000';
         this.data.customizacao.logoUrl = document.getElementById('logoUrl')?.value || '';
     }
-
-
+    
     // ====================================================================
     // MÉTODOS DE RENDERIZAÇÃO DOS DADOS NO FORMULÁRIO (OUTPUT)
     // ====================================================================
-    
+
     renderFormFields() {
         const d = this.data;
 
-        // 1. Configurações de Publicação (Publicar)
+        // Configurações de Publicação (Publicar)
         if (document.getElementById('binId')) {
             document.getElementById('binId').value = d.configuracoes.binId || '';
             document.getElementById('masterKey').value = d.configuracoes.masterKey || '';
         }
 
-        // 2. Dados Operacionais e Pagamento (Loja)
+        // Dados Operacionais (Loja)
         if (document.getElementById('storeStatus')) {
             document.getElementById('storeStatus').value = d.configuracoes.storeStatus || 'closed';
             document.getElementById('whatsapp').value = d.configuracoes.whatsapp || '';
+        }
+        
+        // Dados de Pagamento (Loja)
+        if (document.getElementById('pixKey')) {
             document.getElementById('pixKey').value = d.pagamento.pixKey || '';
             document.getElementById('bankDetails').value = d.pagamento.bankDetails || '';
             document.getElementById('bitcoinLightning').value = d.pagamento.bitcoinLightning || '';
         }
 
-        // 3. Customização (Customizar)
+        // Customização (Customizar)
         if (document.getElementById('colorPrimary')) {
             document.getElementById('colorPrimary').value = d.customizacao.colorPrimary || '#000000';
             document.getElementById('colorSecondary').value = d.customizacao.colorSecondary || '#000000';
             document.getElementById('logoUrl').value = d.customizacao.logoUrl || '';
         }
     }
-
-
+    
     // ====================================================================
     // MÉTODOS DE SINCRONIZAÇÃO REMOTA (JSONBIN)
     // ====================================================================
 
     async publishData() {
-        this.collectDataFromForms(); // Coleta todos os dados mais recentes
+        this.collectDataFromForms(); // 1. Coleta todos os dados mais recentes
 
         const { binId, masterKey } = this.data.configuracoes;
 
@@ -162,15 +170,16 @@ class StoreManager {
             return;
         }
 
-        this.saveLocalData(); // 1. Salva localmente (Garantia)
+        // 2. Salva localmente (Garantia de que o trabalho está salvo)
+        this.saveLocalData(); 
 
-        // 2. Publica no JSONBin
+        // 3. Publica no JSONBin
         const url = `https://api.jsonbin.io/v3/b/${binId}`;
         this.toast('⏳ Publicando no JSONBin...');
 
         try {
             const response = await fetch(url, {
-                method: 'PUT', 
+                method: 'PUT', // Atualiza o conteúdo do Bin
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': masterKey, // Chave Secreta para Escrita
@@ -190,11 +199,10 @@ class StoreManager {
         }
     }
 
-
     // ====================================================================
-    // MÉTODOS DE RENDERIZAÇÃO E COLETA DE ITENS (CRUD)
+    // MÉTODOS DE GERENCIAMENTO DE ITENS (CRUD)
     // ====================================================================
-
+    
     renderItemManagement() {
         this.renderCategoriesList();
         this.renderProductsTable();
@@ -209,7 +217,7 @@ class StoreManager {
             const div = document.createElement('div');
             div.className = 'flex justify-between items-center p-2 bg-white rounded-md border';
             div.innerHTML = `
-                <span>${cat.name} (${cat.id})</span>
+                <span>${cat.name}</span>
                 <button onclick="storeManager.deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700 transition">Excluir</button>
             `;
             list.appendChild(div);
@@ -248,11 +256,11 @@ class StoreManager {
             return;
         }
 
-        const newId = 'cat-' + Date.now(); 
+        const newId = 'cat-' + Date.now();
         this.data.categorias.push({ id: newId, name: name });
         nameInput.value = '';
         this.saveLocalData();
-        this.renderCategoriesList();
+        this.renderCategoriesList(); 
     }
 
     deleteCategory(categoryId) {
@@ -305,7 +313,7 @@ class StoreManager {
         
         form.onsubmit = (e) => {
             e.preventDefault();
-            this.saveProduct(productId);
+            this.saveProduct();
         };
     }
 
@@ -313,7 +321,7 @@ class StoreManager {
         document.getElementById('productModal').classList.add('hidden');
     }
     
-    saveProduct(originalProductId) {
+    saveProduct() {
         const productId = document.getElementById('productId').value;
         
         const productData = {
@@ -326,11 +334,13 @@ class StoreManager {
         };
         
         if (productId) {
+            // Edição
             const index = this.data.produtos.findIndex(p => p.id === productId);
             if (index !== -1) {
                 this.data.produtos[index] = productData;
             }
         } else {
+            // Criação
             this.data.produtos.push(productData);
         }
 
@@ -356,7 +366,7 @@ class StoreManager {
     // ====================================================================
     // MÉTODOS DE UI E UTILIDADES
     // ====================================================================
-
+    
     toast(message, className = 'bg-gray-800') {
         const toastEl = document.createElement('div');
         toastEl.className = `fixed bottom-4 right-4 text-white p-3 rounded-lg shadow-xl ${className} z-50 transition-opacity duration-300`;
@@ -374,7 +384,7 @@ class StoreManager {
             section.classList.add('hidden');
         });
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'text-indigo-600', 'font-bold');
+            btn.classList.remove('active-tab', 'font-bold', 'text-indigo-600'); // Remove o estilo ativo
         });
 
         const targetSection = document.getElementById(`tab-${tabName}`);
@@ -383,7 +393,7 @@ class StoreManager {
         }
         const targetButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
         if (targetButton) {
-            targetButton.classList.add('active-tab', 'text-indigo-600', 'font-bold');
+            targetButton.classList.add('active-tab', 'font-bold', 'text-indigo-600');
         }
     }
 
@@ -392,7 +402,7 @@ class StoreManager {
         document.getElementById('saveBtn')?.addEventListener('click', () => this.saveLocalData());
         document.getElementById('publishBtn')?.addEventListener('click', () => this.publishData());
         
-        // Event Listeners para abas de navegação (CORREÇÃO: o DOM já está carregado)
+        // Event Listeners para abas de navegação
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -403,9 +413,12 @@ class StoreManager {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO DA APLICAÇÃO
-// Garante que a inicialização ocorra APÓS o DOM estar totalmente carregado
+// INICIALIZAÇÃO ROBUSTA
+// Só inicia a aplicação quando o DOM (HTML) estiver totalmente carregado.
+// Isso resolve o problema das abas que não mudavam.
 // ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    window.storeManager = new StoreManager(); 
+    // A inicialização da classe agora acontece aqui
+    window.storeManager = new StoreManager();
+    window.storeManager.init(); 
 });
