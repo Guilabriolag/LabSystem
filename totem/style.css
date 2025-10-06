@@ -149,3 +149,32 @@ button {
     opacity: 1;
     visibility: visible;
 }
+/* --- Estilização do Produto (Card) --- */
+.product-card {
+    /* O JS já adicionou as classes Tailwind: border p-4 rounded-lg shadow-md bg-white */
+    transition: transform 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+    /* Estilização básica da imagem */
+    border: 1px solid #eee;
+}
+
+.add-to-cart-btn {
+    /* Sobrescrito pelo JS com var(--primary-color) */
+    font-size: 1rem;
+}
+
+/* --- Estilização da Área do Pedido (Footer) --- */
+.total-area {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+   }
