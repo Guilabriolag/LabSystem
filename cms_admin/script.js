@@ -4,7 +4,7 @@
 
 /**
  * Estrutura Unificada de Dados Padrão (Default Data)
- * Esta estrutura será usada se não houver nada no localStorage.
+ * Usada se não houver dados no localStorage.
  */
 const defaultData = {
     // --- 1. CONFIGURAÇÃO DE PUBLICAÇÃO (CMS) ---
@@ -18,7 +18,7 @@ const defaultData = {
 
     // --- 2. CUSTOMIZAÇÃO (APARÊNCIA) ---
     customizacao: {
-        colorPrimary: '#10B981', // Cor Padrão: Verde Esmeralda
+        colorPrimary: '#10B981', 
         colorSecondary: '#059669', 
         backgroundColor: '#f9f9f9',
         logoUrl: 'https://via.placeholder.com/150x50/10B981/ffffff?text=LabSystem',
@@ -45,18 +45,26 @@ const defaultData = {
 
 class StoreManager {
     constructor() {
-        this.dataKey = 'labsystem_store_data'; // Chave mestra no localStorage
+        this.dataKey = 'labsystem_store_data'; 
         this.data = {};
-        this.currentProductId = null; // Para rastrear o produto em edição
+        this.currentProductId = null; 
     }
 
     // Inicializa: Tenta carregar dados locais, configura eventos e renderiza a UI.
     init() {
         this.loadLocalData();
-        this.setupEventListeners();
         this.renderFormFields(); 
         this.renderItemManagement(); 
-        this.switchTab('publicar'); // Inicia na aba mais crítica
+        this.checkLowStockAlerts(); 
+        this.switchTab('publicar'); 
+
+        // Garante que os Event Listeners sejam configurados, mesmo que haja falha no DOM
+        try {
+            this.setupEventListeners();
+        } catch (e) {
+            console.error("Erro fatal ao configurar Event Listeners:", e);
+            this.toast('❌ Erro de inicialização. Verifique o console.', 'bg-red-500');
+        }
     }
 
     // ====================================================================
@@ -69,7 +77,6 @@ class StoreManager {
             if (savedData) {
                 this.data = JSON.parse(savedData);
             } else {
-                // Cria uma cópia profunda dos dados default para não modificar a constante
                 this.data = JSON.parse(JSON.stringify(defaultData)); 
             }
         } catch (e) {
@@ -80,9 +87,9 @@ class StoreManager {
 
     saveLocalData() {
         try {
-            // Garante que o estado do formulário esteja na memória antes de salvar
             this.collectDataFromForms(); 
             localStorage.setItem(this.dataKey, JSON.stringify(this.data));
+            this.checkLowStockAlerts(); // Atualiza alerta após salvar
             this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
         } catch (e) {
             this.toast('❌ Erro ao salvar dados localmente.', 'bg-red-500');
@@ -94,12 +101,10 @@ class StoreManager {
     // MÉTODOS DE COLETA DE DADOS DO FORMULÁRIO (INPUT)
     // ====================================================================
 
-    // Função Mestra: Coleta TODOS os dados visíveis do formulário e atualiza this.data
     collectDataFromForms() {
         this.collectPublicationFields();
         this.collectCustomizationFields();
         this.collectDadosLojaFields();
-        // Os itens (produtos/categorias) são manipulados diretamente pelos métodos CRUD, não via esta função.
     }
 
     collectPublicationFields() {
@@ -161,7 +166,7 @@ class StoreManager {
     // ====================================================================
 
     async publishData() {
-        this.collectDataFromForms(); // 1. Coleta todos os dados mais recentes
+        this.collectDataFromForms(); 
 
         const { binId, masterKey } = this.data.configuracoes;
 
@@ -170,19 +175,17 @@ class StoreManager {
             return;
         }
 
-        // 2. Salva localmente (Garantia de que o trabalho está salvo)
         this.saveLocalData(); 
 
-        // 3. Publica no JSONBin
         const url = `https://api.jsonbin.io/v3/b/${binId}`;
         this.toast('⏳ Publicando no JSONBin...');
 
         try {
             const response = await fetch(url, {
-                method: 'PUT', // Atualiza o conteúdo do Bin
+                method: 'PUT', 
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Master-Key': masterKey, // Chave Secreta para Escrita
+                    'X-Master-Key': masterKey, 
                 },
                 body: JSON.stringify(this.data)
             });
@@ -334,13 +337,11 @@ class StoreManager {
         };
         
         if (productId) {
-            // Edição
             const index = this.data.produtos.findIndex(p => p.id === productId);
             if (index !== -1) {
                 this.data.produtos[index] = productData;
             }
         } else {
-            // Criação
             this.data.produtos.push(productData);
         }
 
@@ -362,6 +363,85 @@ class StoreManager {
         this.renderProductsTable();
         this.toast('Produto excluído.', 'bg-red-500');
     }
+    
+    // ====================================================================
+    // MÉTODOS DE BACKUP/RESTORE (LOCAL)
+    // ====================================================================
+
+    exportData() {
+        this.collectDataFromForms(); 
+        const dataStr = JSON.stringify(this.data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `labsystem_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.toast('💾 Dados exportados com sucesso!', 'bg-gray-700');
+    }
+
+    triggerImport() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.style.display = 'none';
+        input.addEventListener('change', (e) => this.importData(e));
+        document.body.appendChild(input);
+        input.click();
+        document.body.removeChild(input);
+    }
+
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData && importedData.configuracoes && importedData.produtos) {
+                    if (confirm('Importar? Isso substituirá TODOS os dados atuais do CMS local. Tem certeza?')) {
+                        this.data = importedData;
+                        this.saveLocalData(); 
+                        this.renderFormFields(); 
+                        this.renderItemManagement(); 
+                        this.toast('🎉 Dados importados com sucesso! Não esqueça de PUBLICAR.', 'bg-indigo-500');
+                    }
+                } else {
+                    this.toast('❌ Arquivo JSON inválido ou incompleto para o LabSystem.', 'bg-red-500');
+                }
+            } catch (error) {
+                this.toast('❌ Erro ao ler o arquivo. Certifique-se de que é um JSON válido.', 'bg-red-500');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ====================================================================
+    // MÉTODOS DE ALERTA DE ESTOQUE
+    // ====================================================================
+
+    checkLowStockAlerts() {
+        const alertContainer = document.getElementById('lowStockAlerts');
+        if (!alertContainer) return;
+
+        const threshold = this.data.configuracoes.lowStockThreshold || 5;
+        const lowStockProducts = this.data.produtos.filter(p => p.stock <= threshold && p.stock > 0);
+
+        if (lowStockProducts.length > 0) {
+            alertContainer.classList.remove('hidden');
+            const alertHtml = lowStockProducts.map(p => 
+                `<span class="block text-sm">⚠️ ${p.name}: ${p.stock} em estoque</span>`
+            ).join('');
+            alertContainer.innerHTML = `<h4 class="font-bold mb-1">ALERTA DE ESTOQUE (${lowStockProducts.length})</h4>${alertHtml}`;
+        } else {
+            alertContainer.classList.add('hidden');
+        }
+    }
+
 
     // ====================================================================
     // MÉTODOS DE UI E UTILIDADES
@@ -384,7 +464,7 @@ class StoreManager {
             section.classList.add('hidden');
         });
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'font-bold', 'text-indigo-600'); // Remove o estilo ativo
+            btn.classList.remove('active-tab', 'font-bold', 'text-indigo-600'); 
         });
 
         const targetSection = document.getElementById(`tab-${tabName}`);
@@ -402,7 +482,8 @@ class StoreManager {
         document.getElementById('saveBtn')?.addEventListener('click', () => this.saveLocalData());
         document.getElementById('publishBtn')?.addEventListener('click', () => this.publishData());
         
-        // Event Listeners para abas de navegação
+        // Event Listeners para abas de navegação (principal fonte do problema)
+        // O uso do forEach e do addEventListener é o padrão, mas a garantia de que o DOM está pronto é crucial.
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -413,116 +494,11 @@ class StoreManager {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO ROBUSTA
-// Só inicia a aplicação quando o DOM (HTML) estiver totalmente carregado.
-// Isso resolve o problema das abas que não mudavam.
+// INICIALIZAÇÃO ROBUSTA (Correção Definitiva para o Problema das Abas)
+// O script só começa a instanciar e anexar eventos quando o HTML está pronto.
 // ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-// DENTRO da classe StoreManager { ...
-
-    // ====================================================================
-    // MÉTODOS DE BACKUP/RESTORE (LOCAL)
-    // ====================================================================
-
-    // Exporta todo o objeto de dados (this.data) para um arquivo JSON
-    exportData() {
-        this.collectDataFromForms(); // Garante que a memória esteja atualizada
-        const dataStr = JSON.stringify(this.data, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `labsystem_backup_${new Date().toISOString().slice(0, 10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        this.toast('💾 Dados exportados com sucesso!', 'bg-gray-700');
-    }
-
-    // Prepara o input de arquivo para a importação
-    triggerImport() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'application/json';
-        input.style.display = 'none';
-        input.addEventListener('change', (e) => this.importData(e));
-        document.body.appendChild(input);
-        input.click();
-        document.body.removeChild(input);
-    }
-
-    // Importa dados de um arquivo JSON
-    importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                if (importedData && importedData.configuracoes && importedData.produtos) {
-                    if (confirm('Importar? Isso substituirá TODOS os dados atuais do CMS local. Tem certeza?')) {
-                        // Faz a substituição dos dados
-                        this.data = importedData;
-                        this.saveLocalData(); // Salva a nova estrutura no LocalStorage
-                        this.renderFormFields(); // Atualiza formulários
-                        this.renderItemManagement(); // Atualiza tabelas
-                        this.toast('🎉 Dados importados com sucesso! Não esqueça de PUBLICAR.', 'bg-indigo-500');
-                    }
-                } else {
-                    this.toast('❌ Arquivo JSON inválido ou incompleto para o LabSystem.', 'bg-red-500');
-                }
-            } catch (error) {
-                this.toast('❌ Erro ao ler o arquivo. Certifique-se de que é um JSON válido.', 'bg-red-500');
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    // ====================================================================
-    // MÉTODOS DE ALERTA DE ESTOQUE
-    // ====================================================================
-
-    // Adiciona o ícone de alerta se o estoque estiver baixo
-    checkLowStockAlerts() {
-        const alertContainer = document.getElementById('lowStockAlerts');
-        if (!alertContainer) return;
-
-        const threshold = this.data.configuracoes.lowStockThreshold || 5;
-        const lowStockProducts = this.data.produtos.filter(p => p.stock <= threshold && p.stock > 0);
-
-        if (lowStockProducts.length > 0) {
-            alertContainer.classList.remove('hidden');
-            const alertHtml = lowStockProducts.map(p => 
-                `<span class="block text-sm">⚠️ ${p.name}: ${p.stock} em estoque</span>`
-            ).join('');
-            alertContainer.innerHTML = `<h4 class="font-bold mb-1">ALERTA DE ESTOQUE (${lowStockProducts.length})</h4>${alertHtml}`;
-        } else {
-            alertContainer.classList.add('hidden');
-        }
-    }
-// ...
+    // Colocamos o objeto na window para que possa ser acessado pelo HTML (ex: onclick="storeManager.addCategory()")
     window.storeManager = new StoreManager();
     window.storeManager.init(); 
-    // DENTRO da classe StoreManager no método init()
-init() {
-    this.loadLocalData();
-    this.setupEventListeners();
-    this.renderFormFields(); 
-    this.renderItemManagement(); 
-    this.checkLowStockAlerts(); // NOVO: Checa alertas na inicialização
-    this.switchTab('publicar'); 
-}
-    // DENTRO da classe StoreManager no método saveLocalData()
-saveLocalData() {
-    // ... código de salvamento
-    
-    // CHAMADA NOVA:
-    this.checkLowStockAlerts(); // Atualiza alerta após salvar
-    this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
-
-    // ... código de tratamento de erro
-}
-    
 });
