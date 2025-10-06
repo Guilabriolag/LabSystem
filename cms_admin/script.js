@@ -1,32 +1,30 @@
 // ====================================================================
 // Serverless-System | CMS ADMIN - LÓGICA PRINCIPAL (script.js)
+// Arquivo Unificado: Persistência Local, JSONBin e Gerenciamento de Itens
 // ====================================================================
 
 /**
  * Estrutura Unificada de Dados Padrão (Default Data)
- * Esta estrutura será usada se não houver nada no localStorage.
  */
 const defaultData = {
     // --- 1. CONFIGURAÇÃO DE PUBLICAÇÃO (CMS) ---
     configuracoes: {
-        binId: '', // O ID do Bin da loja (será lido do input)
-        masterKey: '', // A chave para Escrita (Master Key do JSONBin)
+        binId: '', 
+        masterKey: '', 
         storeStatus: 'open', // open | closed
         whatsapp: '5511999998888',
         lowStockThreshold: 5,
-        // ... outras configurações gerais
     },
 
     // --- 2. CUSTOMIZAÇÃO (APARÊNCIA) ---
     customizacao: {
-        colorPrimary: '#10B981', // Ex: Cor Verde Esmeralda (Principal)
-        colorSecondary: '#059669', // Ex: Cor Verde Escuro
+        colorPrimary: '#10B981', 
+        colorSecondary: '#059669',
         backgroundColor: '#f9f9f9',
-        logoUrl: 'https://via.placeholder.com/150x50/10B981/ffffff?text=Logo',
+        logoUrl: 'https://via.placeholder.com/150x50/10B981/ffffff?text=LOGO',
     },
 
     // --- 3. ITENS E CARDÁPIO (TOTEM) ---
-    // A estrutura unificada de produtos e preços do McClone
     categorias: [
         { id: 'cat-1', name: 'Combos Especiais' },
         { id: 'cat-2', name: 'Hambúrgueres' }
@@ -40,33 +38,69 @@ const defaultData = {
     pagamento: {
         pixKey: 'sua-chave-pix-aqui',
         bankDetails: 'Banco X, Ag 0001, C/C 12345-6',
-        bitcoinLightning: '' // Suporte a Bitcoin Lightning
+        bitcoinLightning: '' 
     },
-
-    // ... Outras seções como cupons, publicidade, etc.
 };
 
-// ... (O início do script e a classe StoreManager)
+
+class StoreManager {
+    constructor() {
+        this.dataKey = 'labsystem_store_data'; 
+        this.data = {};
+        // O init agora é chamado no DOMContentLoaded
+        this.loadLocalData();
+        this.setupEventListeners();
+        this.renderFormFields(); 
+        this.renderItemManagement();
+        this.switchTab('publicar'); 
+    }
+
+    // ====================================================================
+    // MÉTODOS DE PERSISTÊNCIA LOCAL (LOCAL STORAGE)
+    // ====================================================================
+
+    loadLocalData() {
+        try {
+            const savedData = localStorage.getItem(this.dataKey);
+            if (savedData) {
+                this.data = JSON.parse(savedData);
+            } else {
+                this.data = JSON.parse(JSON.stringify(defaultData)); 
+            }
+        } catch (e) {
+            console.error('Erro ao carregar dados locais:', e);
+            this.data = JSON.parse(JSON.stringify(defaultData));
+        }
+    }
+
+    saveLocalData() {
+        try {
+            this.collectDataFromForms(); 
+            localStorage.setItem(this.dataKey, JSON.stringify(this.data));
+            this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
+        } catch (e) {
+            this.toast('❌ Erro ao salvar dados localmente.', 'bg-red-500');
+            console.error('Erro ao salvar no LocalStorage:', e);
+        }
+    }
 
     // ====================================================================
     // MÉTODOS DE COLETA DE DADOS DO FORMULÁRIO (INPUT)
     // ====================================================================
-
+    
     // Função Mestra: Coleta TODOS os dados do formulário e atualiza this.data
     collectDataFromForms() {
         this.collectPublicationFields();
         this.collectCustomizationFields();
         this.collectDadosLojaFields();
-        // ... Chamar outras funções de coleta (itens, cupons, etc)
+        // Não precisa coletar Itens, pois eles são manipulados diretamente pelas funções CRUD (addCategory, saveProduct, etc.)
     }
 
-    // Coleta BIN ID e Master Key
     collectPublicationFields() {
         this.data.configuracoes.binId = document.getElementById('binId')?.value || '';
         this.data.configuracoes.masterKey = document.getElementById('masterKey')?.value || '';
     }
 
-    // Coleta Dados Operacionais e Pagamento
     collectDadosLojaFields() {
         this.data.configuracoes.storeStatus = document.getElementById('storeStatus')?.value || 'closed';
         this.data.configuracoes.whatsapp = document.getElementById('whatsapp')?.value || '';
@@ -76,7 +110,6 @@ const defaultData = {
         this.data.pagamento.bitcoinLightning = document.getElementById('bitcoinLightning')?.value || '';
     }
     
-    // Coleta Customização
     collectCustomizationFields() {
         this.data.customizacao.colorPrimary = document.getElementById('colorPrimary')?.value || '#000000';
         this.data.customizacao.colorSecondary = document.getElementById('colorSecondary')?.value || '#000000';
@@ -88,7 +121,6 @@ const defaultData = {
     // MÉTODOS DE RENDERIZAÇÃO DOS DADOS NO FORMULÁRIO (OUTPUT)
     // ====================================================================
     
-    // Renderiza os valores de this.data nos campos de formulário (CMS)
     renderFormFields() {
         const d = this.data;
 
@@ -98,20 +130,16 @@ const defaultData = {
             document.getElementById('masterKey').value = d.configuracoes.masterKey || '';
         }
 
-        // 2. Dados Operacionais (Loja)
+        // 2. Dados Operacionais e Pagamento (Loja)
         if (document.getElementById('storeStatus')) {
             document.getElementById('storeStatus').value = d.configuracoes.storeStatus || 'closed';
             document.getElementById('whatsapp').value = d.configuracoes.whatsapp || '';
-        }
-        
-        // 3. Dados de Pagamento (Loja)
-        if (document.getElementById('pixKey')) {
             document.getElementById('pixKey').value = d.pagamento.pixKey || '';
             document.getElementById('bankDetails').value = d.pagamento.bankDetails || '';
             document.getElementById('bitcoinLightning').value = d.pagamento.bitcoinLightning || '';
         }
 
-        // 4. Customização (Customizar)
+        // 3. Customização (Customizar)
         if (document.getElementById('colorPrimary')) {
             document.getElementById('colorPrimary').value = d.customizacao.colorPrimary || '#000000';
             document.getElementById('colorSecondary').value = d.customizacao.colorSecondary || '#000000';
@@ -119,10 +147,9 @@ const defaultData = {
         }
     }
 
-// ... (O restante do script, incluindo publishData e a inicialização)
 
     // ====================================================================
-    // MÉTODOS DE SINCRONIZAÇÃO REMOTA (JSONBIN) - Próximo Passo
+    // MÉTODOS DE SINCRONIZAÇÃO REMOTA (JSONBIN)
     // ====================================================================
 
     async publishData() {
@@ -135,8 +162,7 @@ const defaultData = {
             return;
         }
 
-        // 1. Salva localmente (Garantia de que o trabalho está salvo)
-        this.saveLocalData(); 
+        this.saveLocalData(); // 1. Salva localmente (Garantia)
 
         // 2. Publica no JSONBin
         const url = `https://api.jsonbin.io/v3/b/${binId}`;
@@ -144,7 +170,7 @@ const defaultData = {
 
         try {
             const response = await fetch(url, {
-                method: 'PUT', // Atualiza o conteúdo do Bin
+                method: 'PUT', 
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': masterKey, // Chave Secreta para Escrita
@@ -163,23 +189,174 @@ const defaultData = {
             console.error('JSONBin Error:', error);
         }
     }
+
+
+    // ====================================================================
+    // MÉTODOS DE RENDERIZAÇÃO E COLETA DE ITENS (CRUD)
+    // ====================================================================
+
+    renderItemManagement() {
+        this.renderCategoriesList();
+        this.renderProductsTable();
+    }
     
+    renderCategoriesList() {
+        const list = document.getElementById('categoriesList');
+        if (!list) return;
+
+        list.innerHTML = '';
+        this.data.categorias.forEach(cat => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center p-2 bg-white rounded-md border';
+            div.innerHTML = `
+                <span>${cat.name} (${cat.id})</span>
+                <button onclick="storeManager.deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700 transition">Excluir</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+    
+    renderProductsTable() {
+        const tbody = document.getElementById('productsTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        this.data.produtos.forEach(prod => {
+            const category = this.data.categorias.find(c => c.id === prod.categoryId);
+            const row = tbody.insertRow();
+            row.className = 'hover:bg-gray-50';
+            
+            row.innerHTML = `
+                <td class="py-2 px-4 border-b">${prod.name}</td>
+                <td class="py-2 px-4 border-b">${category ? category.name : 'Sem Categoria'}</td>
+                <td class="py-2 px-4 border-b">R$ ${prod.price.toFixed(2).replace('.', ',')}</td>
+                <td class="py-2 px-4 border-b">${prod.stock}</td>
+                <td class="py-2 px-4 border-b text-center space-x-2">
+                    <button onclick="storeManager.editProduct('${prod.id}')" class="text-blue-500 hover:text-blue-700">Editar</button>
+                    <button onclick="storeManager.deleteProduct('${prod.id}')" class="text-red-500 hover:text-red-700">Excluir</button>
+                </td>
+            `;
+        });
+    }
+
+    addCategory() {
+        const nameInput = document.getElementById('newCategoryName');
+        const name = nameInput.value.trim();
+
+        if (!name) {
+            this.toast('Nome da categoria é obrigatório.', 'bg-yellow-500');
+            return;
+        }
+
+        const newId = 'cat-' + Date.now(); 
+        this.data.categorias.push({ id: newId, name: name });
+        nameInput.value = '';
+        this.saveLocalData();
+        this.renderCategoriesList();
+    }
+
+    deleteCategory(categoryId) {
+        if (!confirm('Tem certeza que deseja excluir esta categoria? Todos os produtos nela serão movidos para "Sem Categoria".')) return;
+        
+        this.data.categorias = this.data.categorias.filter(cat => cat.id !== categoryId);
+        
+        this.data.produtos = this.data.produtos.map(prod => {
+            if (prod.categoryId === categoryId) {
+                prod.categoryId = null; 
+            }
+            return prod;
+        });
+
+        this.saveLocalData();
+        this.renderItemManagement();
+    }
+    
+    openProductModal(productId = null) {
+        const modal = document.getElementById('productModal');
+        const form = document.getElementById('productForm');
+        const categorySelect = document.getElementById('productCategoryId');
+        
+        categorySelect.innerHTML = '';
+        this.data.categorias.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            categorySelect.appendChild(option);
+        });
+
+        form.reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('modalTitle').textContent = 'Adicionar Novo Produto';
+
+        if (productId) {
+            const product = this.data.produtos.find(p => p.id === productId);
+            if (product) {
+                document.getElementById('modalTitle').textContent = 'Editar Produto';
+                document.getElementById('productId').value = product.id;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productStock').value = product.stock;
+                document.getElementById('productImageUrl').value = product.imageUrl;
+                document.getElementById('productCategoryId').value = product.categoryId;
+            }
+        }
+
+        modal.classList.remove('hidden');
+        
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            this.saveProduct(productId);
+        };
+    }
+
+    closeProductModal() {
+        document.getElementById('productModal').classList.add('hidden');
+    }
+    
+    saveProduct(originalProductId) {
+        const productId = document.getElementById('productId').value;
+        
+        const productData = {
+            id: productId || 'prod-' + Date.now(),
+            name: document.getElementById('productName').value,
+            price: parseFloat(document.getElementById('productPrice').value),
+            stock: parseInt(document.getElementById('productStock').value),
+            imageUrl: document.getElementById('productImageUrl').value,
+            categoryId: document.getElementById('productCategoryId').value,
+        };
+        
+        if (productId) {
+            const index = this.data.produtos.findIndex(p => p.id === productId);
+            if (index !== -1) {
+                this.data.produtos[index] = productData;
+            }
+        } else {
+            this.data.produtos.push(productData);
+        }
+
+        this.saveLocalData();
+        this.renderItemManagement();
+        this.closeProductModal();
+        this.toast('Produto salvo com sucesso!', 'bg-green-500');
+    }
+
+    editProduct(productId) {
+        this.openProductModal(productId);
+    }
+    
+    deleteProduct(productId) {
+        if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+        
+        this.data.produtos = this.data.produtos.filter(p => p.id !== productId);
+        this.saveLocalData();
+        this.renderProductsTable();
+        this.toast('Produto excluído.', 'bg-red-500');
+    }
+
     // ====================================================================
     // MÉTODOS DE UI E UTILIDADES
     // ====================================================================
 
-    // Renderiza os valores de this.data nos campos de formulário (CMS)
-    renderFormFields() {
-        // 1. Campos de Publicação
-        if (document.getElementById('binId')) {
-            document.getElementById('binId').value = this.data.configuracoes.binId;
-            document.getElementById('masterKey').value = this.data.configuracoes.masterKey; // A Master Key pode ser sensível, mas salva localmente para conveniência.
-        }
-        
-        // 2. Outros campos de Customização, etc. (A SER IMPLEMENTADO)
-    }
-    
-    // Funções de Utilitário para UI
     toast(message, className = 'bg-gray-800') {
         const toastEl = document.createElement('div');
         toastEl.className = `fixed bottom-4 right-4 text-white p-3 rounded-lg shadow-xl ${className} z-50 transition-opacity duration-300`;
@@ -203,7 +380,6 @@ const defaultData = {
         const targetSection = document.getElementById(`tab-${tabName}`);
         if (targetSection) {
             targetSection.classList.remove('hidden');
-            targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         const targetButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
         if (targetButton) {
@@ -215,9 +391,8 @@ const defaultData = {
         // Event Listeners para botões principais
         document.getElementById('saveBtn')?.addEventListener('click', () => this.saveLocalData());
         document.getElementById('publishBtn')?.addEventListener('click', () => this.publishData());
-        // document.getElementById('visitBtn')?.addEventListener('click', () => window.open('/totem/index.html', '_blank'));
         
-        // Event Listeners para abas de navegação
+        // Event Listeners para abas de navegação (CORREÇÃO: o DOM já está carregado)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -227,5 +402,10 @@ const defaultData = {
     }
 }
 
-// Inicialização da aplicação
-const storeManager = new StoreManager();
+// ====================================================================
+// INICIALIZAÇÃO DA APLICAÇÃO
+// Garante que a inicialização ocorra APÓS o DOM estar totalmente carregado
+// ====================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    window.storeManager = new StoreManager(); 
+});
