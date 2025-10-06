@@ -418,7 +418,91 @@ class StoreManager {
 // Isso resolve o problema das abas que não mudavam.
 // ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // A inicialização da classe agora acontece aqui
+// DENTRO da classe StoreManager { ...
+
+    // ====================================================================
+    // MÉTODOS DE BACKUP/RESTORE (LOCAL)
+    // ====================================================================
+
+    // Exporta todo o objeto de dados (this.data) para um arquivo JSON
+    exportData() {
+        this.collectDataFromForms(); // Garante que a memória esteja atualizada
+        const dataStr = JSON.stringify(this.data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `labsystem_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.toast('💾 Dados exportados com sucesso!', 'bg-gray-700');
+    }
+
+    // Prepara o input de arquivo para a importação
+    triggerImport() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.style.display = 'none';
+        input.addEventListener('change', (e) => this.importData(e));
+        document.body.appendChild(input);
+        input.click();
+        document.body.removeChild(input);
+    }
+
+    // Importa dados de um arquivo JSON
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData && importedData.configuracoes && importedData.produtos) {
+                    if (confirm('Importar? Isso substituirá TODOS os dados atuais do CMS local. Tem certeza?')) {
+                        // Faz a substituição dos dados
+                        this.data = importedData;
+                        this.saveLocalData(); // Salva a nova estrutura no LocalStorage
+                        this.renderFormFields(); // Atualiza formulários
+                        this.renderItemManagement(); // Atualiza tabelas
+                        this.toast('🎉 Dados importados com sucesso! Não esqueça de PUBLICAR.', 'bg-indigo-500');
+                    }
+                } else {
+                    this.toast('❌ Arquivo JSON inválido ou incompleto para o LabSystem.', 'bg-red-500');
+                }
+            } catch (error) {
+                this.toast('❌ Erro ao ler o arquivo. Certifique-se de que é um JSON válido.', 'bg-red-500');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ====================================================================
+    // MÉTODOS DE ALERTA DE ESTOQUE
+    // ====================================================================
+
+    // Adiciona o ícone de alerta se o estoque estiver baixo
+    checkLowStockAlerts() {
+        const alertContainer = document.getElementById('lowStockAlerts');
+        if (!alertContainer) return;
+
+        const threshold = this.data.configuracoes.lowStockThreshold || 5;
+        const lowStockProducts = this.data.produtos.filter(p => p.stock <= threshold && p.stock > 0);
+
+        if (lowStockProducts.length > 0) {
+            alertContainer.classList.remove('hidden');
+            const alertHtml = lowStockProducts.map(p => 
+                `<span class="block text-sm">⚠️ ${p.name}: ${p.stock} em estoque</span>`
+            ).join('');
+            alertContainer.innerHTML = `<h4 class="font-bold mb-1">ALERTA DE ESTOQUE (${lowStockProducts.length})</h4>${alertHtml}`;
+        } else {
+            alertContainer.classList.add('hidden');
+        }
+    }
+// ...
     window.storeManager = new StoreManager();
     window.storeManager.init(); 
 });
