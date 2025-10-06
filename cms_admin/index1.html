@@ -100,7 +100,7 @@
                                 </div>
                             </div>
 
-                            <button id="publishBtn" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition mt-6" onclick="storeManager.publishData()">
+                            <button id="publishBtn" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition mt-6">
                                 PUBLICAR E SINCRONIZAR DADOS (JSONBin)
                             </button>
                         </div>
@@ -225,70 +225,70 @@
                 </section>
 
                 <section id="tab-customizar" class="tab-section hidden fade-in">
-    <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Customização Visual e Mídia do Totem</h2>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h3 class="text-xl font-bold mb-4 border-b pb-2">Identidade Visual e Cores</h3>
-            <p class="text-sm text-gray-600 mb-6">Defina as cores principais do seu tema.</p>
-            
-            <div class="space-y-4">
-                <label class="block flex items-center space-x-4">
-                    <span class="text-gray-700 font-medium w-40">Cor 1 (Cabeçalho/Botões):</span>
-                    <input type="color" id="headerFooterColor" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
-                    <input type="text" id="headerFooterColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#10B981" onchange="document.getElementById('headerFooterColor').value = this.value; storeManager.saveLocalData()">
-                </label>
-                
-                <label class="block flex items-center space-x-4">
-                    <span class="text-gray-700 font-medium w-40">Cor 2 (Letra/Título):</span>
-                    <input type="color" id="titleTextColor" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
-                    <input type="text" id="titleTextColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#FFFFFF" onchange="document.getElementById('titleTextColor').value = this.value; storeManager.saveLocalData()">
-                </label>
-                
-                <label class="block flex items-center space-x-4">
-                    <span class="text-gray-700 font-medium w-40">Cor de Fundo:</span>
-                    <input type="color" id="backgroundColor" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
-                    <input type="text" id="backgroundColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#f9f9f9" onchange="document.getElementById('backgroundColor').value = this.value; storeManager.saveLocalData()">
-                </label>
-                
-                <label class="block pt-2">
-                    <span class="text-gray-700 font-medium">URL da Imagem de Fundo (Opcional):</span>
-                    <input type="url" id="backgroundImageUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://i.imgur.com/seu_fundo.png" onchange="storeManager.saveLocalData()">
-                    <p class="text-xs text-gray-500 mt-1">Se preenchido, a imagem substituirá a Cor de Fundo.</p>
-                </label>
+                    <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Customização Visual e Mídia do Totem</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Identidade Visual e Cores</h3>
+                            <p class="text-sm text-gray-600 mb-6">Defina as cores principais do seu tema.</p>
+                            
+                            <div class="space-y-4">
+                                <label class="block flex items-center space-x-4">
+                                    <span class="text-gray-700 font-medium w-40">Cor 1 (Cabeçalho/Botões):</span>
+                                    <input type="color" id="headerFooterColor" class="h-10 w-10 p-1 border rounded-md" onchange="document.getElementById('headerFooterColorText').value = this.value; storeManager.saveLocalData()">
+                                    <input type="text" id="headerFooterColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#10B981" onchange="document.getElementById('headerFooterColor').value = this.value; storeManager.saveLocalData()">
+                                </label>
+                                
+                                <label class="block flex items-center space-x-4">
+                                    <span class="text-gray-700 font-medium w-40">Cor 2 (Letra/Título):</span>
+                                    <input type="color" id="titleTextColor" class="h-10 w-10 p-1 border rounded-md" onchange="document.getElementById('titleTextColorText').value = this.value; storeManager.saveLocalData()">
+                                    <input type="text" id="titleTextColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#FFFFFF" onchange="document.getElementById('titleTextColor').value = this.value; storeManager.saveLocalData()">
+                                </label>
+                                
+                                <label class="block flex items-center space-x-4">
+                                    <span class="text-gray-700 font-medium w-40">Cor de Fundo:</span>
+                                    <input type="color" id="backgroundColor" class="h-10 w-10 p-1 border rounded-md" onchange="document.getElementById('backgroundColorText').value = this.value; storeManager.saveLocalData()">
+                                    <input type="text" id="backgroundColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#f9f9f9" onchange="document.getElementById('backgroundColor').value = this.value; storeManager.saveLocalData()">
+                                </label>
+                                
+                                <label class="block pt-2">
+                                    <span class="text-gray-700 font-medium">URL da Imagem de Fundo (Opcional):</span>
+                                    <input type="url" id="backgroundImageUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://i.imgur.com/seu_fundo.png" onchange="storeManager.saveLocalData()">
+                                    <p class="text-xs text-gray-500 mt-1">Se preenchido, a imagem substituirá a Cor de Fundo.</p>
+                                </label>
 
-                <label class="block pt-2 border-t mt-4">
-                    <span class="text-gray-700 font-medium">URL da Imagem da Logo:</span>
-                    <input type="url" id="logoUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://i.imgur.com/sua_logo.png" onchange="storeManager.saveLocalData()">
-                </label>
-            </div>
-        </div>
+                                <label class="block pt-2 border-t mt-4">
+                                    <span class="text-gray-700 font-medium">URL da Imagem da Logo:</span>
+                                    <input type="url" id="logoUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://i.imgur.com/sua_logo.png" onchange="storeManager.saveLocalData()">
+                                </label>
+                            </div>
+                        </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h3 class="text-xl font-bold mb-4 border-b pb-2">Música e Mídia</h3>
-            <p class="text-sm text-gray-600 mb-6">Música de fundo para uma melhor experiência (o usuário deve dar o primeiro play).</p>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Música e Mídia</h3>
+                            <p class="text-sm text-gray-600 mb-6">Música de fundo para uma melhor experiência (o usuário deve dar o primeiro play).</p>
 
-            <div class="space-y-4">
-                <label class="block">
-                    <span class="text-gray-700 font-medium">Link do YouTube para Música de Fundo:</span>
-                    <input type="url" id="musicUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://www.youtube.com/watch?v=xxxxxxxxxxx" onchange="storeManager.saveLocalData()">
-                    <p class="text-xs text-gray-500 mt-1">O Totem tentará rodar em loop este vídeo como música.</p>
-                </label>
-                
-                <label class="block pt-2">
-                    <span class="text-gray-700 font-medium flex justify-between items-center">
-                        Volume da Música (0-100):
-                        <span id="musicVolumeValue" class="font-bold text-indigo-600">50</span>
-                    </span>
-                    <input type="range" id="musicVolume" min="0" max="100" step="5" value="50" 
-                           class="mt-1 block w-full" 
-                           oninput="document.getElementById('musicVolumeValue').textContent = this.value; storeManager.saveLocalData()">
-                </label>
-                
-            </div>
-        </div>
-    </div>
+                            <div class="space-y-4">
+                                <label class="block">
+                                    <span class="text-gray-700 font-medium">Link do YouTube para Música de Fundo:</span>
+                                    <input type="url" id="musicUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://www.youtube.com/watch?v=xxxxxxxxxxx" onchange="storeManager.saveLocalData()">
+                                    <p class="text-xs text-gray-500 mt-1">O Totem tentará rodar em loop este vídeo como música.</p>
+                                </label>
+                                
+                                <label class="block pt-2">
+                                    <span class="text-gray-700 font-medium flex justify-between items-center">
+                                        Volume da Música (0-100):
+                                        <span id="musicVolumeValue" class="font-bold text-indigo-600">50</span>
+                                    </span>
+                                    <input type="range" id="musicVolume" min="0" max="100" step="5" value="50" 
+                                           class="mt-1 block w-full" 
+                                           onchange="storeManager.saveLocalData()">
+                                </label>
+                                
+                            </div>
+                        </div>
+                    </div>
                 </section>
                 
                 </div>
@@ -337,4 +337,4 @@
         </div>
     <script src="script.js"></script>
 </body>
-                                                   </html>
+                                                         </html>
