@@ -14,14 +14,12 @@
       color: #fff;
       overflow: hidden;
     }
-
     canvas {
       position: fixed;
       top: 0;
       left: 0;
       z-index: 0;
     }
-
     .intro {
       position: fixed;
       top: 0;
@@ -34,7 +32,6 @@
       justify-content: center;
       z-index: 1;
     }
-
     .logo {
       width: 120px;
       height: 120px;
@@ -43,13 +40,11 @@
       box-shadow: 0 0 20px #00f6ff, 0 0 40px #00f6ff, 0 0 60px #00f6ff;
       animation: pulse 2s infinite;
     }
-
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.05); opacity: 0.9; }
       100% { transform: scale(1); opacity: 1; }
     }
-
     .title {
       font-size: 1.5rem;
       font-weight: bold;
@@ -60,12 +55,10 @@
       border-right: 2px solid #fff;
       animation: typing 2.5s steps(40, end) forwards;
     }
-
     @keyframes typing {
       from { width: 0 }
       to { width: 100% }
     }
-
     .buttons {
       position: absolute;
       bottom: 60px;
@@ -73,7 +66,6 @@
       gap: 20px;
       z-index: 2;
     }
-
     .btn {
       background: #00f6ff;
       color: #000;
@@ -85,25 +77,20 @@
       transform: translateX(0);
       transition: transform 0.5s ease, opacity 0.5s ease;
     }
-
     .btn.access {
       animation: slideInRight 0.8s ease 2.9s forwards;
     }
-
     .btn.labriolag {
       animation: slideInLeft 0.8s ease 2.9s forwards;
     }
-
     @keyframes slideInRight {
       from { transform: translateX(100px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-
     @keyframes slideInLeft {
       from { transform: translateX(-100px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-
     /* Oculta o player do YouTube */
     .audio {
       position: absolute;
