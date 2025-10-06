@@ -1,20 +1,20 @@
 // ====================================================================
-// Serverless-System | TOTEM PÚBLICO - LÓGICA DE LEITURA (script.js)
+// Serverless-System | TOTEM PÚBLICO - LÓGICA FINAL (script.js)
 // ====================================================================
 
-// Variável global para armazenar os dados da loja
 let storeData = null; 
+let cart = {}; // { 'prod-1': { item: {id, name, price, ...}, quantity: 1, total: 18.50 }, ... }
 
-// A CHAVE BIN ID DA LOJA (DEVE SER CONFIGURADA POR CLIENTE)
-// Em um cenário real, o comerciante daria este ID a você, e você o inseriria aqui.
+// --- CONFIGURAÇÃO CHAVE ---
 const CLIENT_BIN_ID = 'SUA_BIN_ID_DE_TESTE'; // SUBSTITUA PELO BIN ID REAL DO JSONBIN
-const DATA_CACHE_KEY = 'labsystem_totem_cache'; // Chave para o cache local do Totem
+const DATA_CACHE_KEY = 'labsystem_totem_cache'; 
+const WHATSAPP_BASE_URL = 'https://api.whatsapp.com/send';
 
 // Inicializa a aplicação
 document.addEventListener('DOMContentLoaded', () => {
     initTotem();
-    // Adiciona listener para o botão do carrinho
     document.getElementById('cart-button').addEventListener('click', toggleDrawer);
+    document.getElementById('checkout-btn').addEventListener('click', checkout);
 });
 
 // ====================================================================
@@ -30,52 +30,39 @@ async function initTotem() {
     
     if (remoteData) {
         storeData = remoteData;
-        console.log("Dados carregados do JSONBin com sucesso.");
     } else {
-        // Falha no remoto: tentar o cache local
         storeData = loadLocalCache();
-        if (storeData) {
-            console.log("Falha no JSONBin, usando dados do cache local.");
-        } else {
-            // Falha total: loja fechada ou erro fatal
+        if (!storeData) {
             storeData = { configuracoes: { storeStatus: 'closed' } };
             loadingMessage.textContent = '❌ Não foi possível carregar a loja. Tente novamente mais tarde.';
             document.getElementById('header-title').textContent = 'LOJA FECHADA / ERRO';
             return; 
         }
     }
-
-    // Se houver dados (remoto ou cache), renderizar a loja
+    // Renderizar a loja (aplica customização, produtos, etc.)
     renderStore(storeData);
+    // Adiciona event listeners para os botões 'Adicionar' (agora que os produtos existem)
+    setupProductListeners();
 }
 
-// 1. Tenta buscar os dados mais recentes do JSONBin (GET)
 async function loadRemoteData() {
-    if (!CLIENT_BIN_ID || CLIENT_BIN_ID === 'SUA_BIN_ID_DE_TESTE') {
-        console.warn("CLIENT_BIN_ID não configurado. Pulando JSONBin.");
-        return null;
-    }
+    if (!CLIENT_BIN_ID || CLIENT_BIN_ID === 'SUA_BIN_ID_DE_TESTE') return null;
 
-    const url = `https://api.jsonbin.io/v3/b/${CLIENT_BIN_ID}/latest`; // Pega a versão mais recente
+    const url = `https://api.jsonbin.io/v3/b/${CLIENT_BIN_ID}/latest`;
     
     try {
         const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`JSONBin status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`JSONBin status: ${response.status}`);
         const data = await response.json();
         
-        // Salva os dados mais recentes no cache local
         localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(data.record));
-        return data.record; // Retorna o objeto de dados da loja
-        
+        return data.record;
     } catch (error) {
         console.error('Erro ao buscar do JSONBin:', error);
-        return null; // Retorna nulo se falhar
+        return null;
     }
 }
 
-// 2. Carrega dados do cache local (o fallback)
 function loadLocalCache() {
     try {
         const cached = localStorage.getItem(DATA_CACHE_KEY);
@@ -87,13 +74,149 @@ function loadLocalCache() {
 }
 
 // ====================================================================
-// FUNÇÕES DE RENDERIZAÇÃO E UI
+// FUNÇÕES DE CARRINHO (CART)
+// ====================================================================
+
+function setupProductListeners() {
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const productId = e.currentTarget.getAttribute('data-product-id');
+            addItemToCart(productId);
+        });
+    });
+}
+
+function getItemById(productId) {
+    // Busca o produto completo na lista de produtos carregada do JSONBin
+    return storeData.produtos.find(p => p.id === productId);
+}
+
+function addItemToCart(productId) {
+    const product = getItemById(productId);
+    if (!product) return;
+
+    if (cart[productId]) {
+        cart[productId].quantity += 1;
+    } else {
+        cart[productId] = {
+            item: product,
+            quantity: 1,
+        };
+    }
+    updateCartUI();
+    toggleDrawer(true); // Abre o carrinho
+}
+
+function removeItemFromCart(productId) {
+    if (cart[productId]) {
+        if (cart[productId].quantity > 1) {
+            cart[productId].quantity -= 1;
+        } else {
+            delete cart[productId]; // Remove o item se a quantidade for 1
+        }
+    }
+    updateCartUI();
+}
+
+function calculateCartTotal() {
+    return Object.values(cart).reduce((total, cartItem) => {
+        return total + (cartItem.item.price * cartItem.quantity);
+    }, 0);
+}
+
+function updateCartUI() {
+    const itemsContainer = document.getElementById('cart-items');
+    const totalEl = document.getElementById('cart-total');
+    const countEl = document.getElementById('cart-count');
+    const total = calculateCartTotal();
+    const itemCount = Object.values(cart).reduce((count, item) => count + item.quantity, 0);
+
+    // Atualiza contadores e total
+    countEl.textContent = itemCount;
+    totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    document.getElementById('checkout-btn').disabled = itemCount === 0;
+
+    // Renderiza itens do carrinho
+    itemsContainer.innerHTML = '';
+    
+    if (itemCount === 0) {
+        itemsContainer.innerHTML = '<p id="empty-cart-message" class="text-gray-500 text-center mt-5">O carrinho está vazio.</p>';
+        return;
+    }
+
+    for (const productId in cart) {
+        const item = cart[productId];
+        const itemTotal = item.item.price * item.quantity;
+        const div = document.createElement('div');
+        div.className = 'cart-item border-b py-3 flex justify-between items-center';
+        div.innerHTML = `
+            <div>
+                <p class="font-medium">${item.item.name}</p>
+                <p class="text-sm text-gray-600">${item.quantity} x R$ ${item.item.price.toFixed(2).replace('.', ',')} = R$ ${itemTotal.toFixed(2).replace('.', ',')}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="removeItemFromCart('${productId}')" class="text-red-500 font-bold px-2 py-1 bg-red-100 rounded">-</button>
+                <span class="font-bold">${item.quantity}</span>
+                <button onclick="addItemToCart('${productId}')" class="text-green-500 font-bold px-2 py-1 bg-green-100 rounded">+</button>
+            </div>
+        `;
+        itemsContainer.appendChild(div);
+    }
+}
+
+// ====================================================================
+// FUNÇÕES DE CHECKOUT E WHATSAPP
+// ====================================================================
+
+function checkout() {
+    const total = calculateCartTotal();
+    const { whatsapp } = storeData.configuracoes;
+    const { pixKey, bankDetails } = storeData.pagamento;
+
+    let orderText = `*Olá! Meu pedido é:*\n\n`;
+
+    // 1. Detalhamento dos Itens
+    Object.values(cart).forEach(item => {
+        const itemTotal = item.item.price * item.quantity;
+        orderText += `* ${item.quantity}x ${item.item.name}* (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+    });
+
+    // 2. Total e Pagamento
+    orderText += `\n*TOTAL: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    orderText += `--- Aguardando pagamento ---\n`;
+    
+    if (pixKey) {
+        orderText += `\n*PIX:* ${pixKey}`;
+    }
+    if (bankDetails) {
+        orderText += `\n*Dados Bancários:* ${bankDetails}`;
+    }
+    orderText += `\n\n*Por favor, envie o comprovante de pagamento e seu endereço de entrega. Obrigado!*`;
+
+    // 3. Geração do Link
+    const fullUrl = `${WHATSAPP_BASE_URL}?phone=${whatsapp}&text=${encodeURIComponent(orderText)}`;
+    
+    // 4. Redirecionar
+    window.open(fullUrl, '_blank');
+    
+    // Limpar o carrinho após o checkout
+    cart = {};
+    updateCartUI();
+    toggleDrawer(false);
+}
+
+
+// ====================================================================
+// FUNÇÕES DE RENDERIZAÇÃO E UTILIDADE (Do Passo 4)
 // ====================================================================
 
 function renderStore(data) {
+    // Garante que o CSS está pronto para aplicar as cores
+    const list = document.getElementById('products-list');
+    
     if (data.configuracoes.storeStatus === 'closed') {
         document.getElementById('header-title').textContent = '⚠️ Loja Fechada';
-        document.getElementById('products-list').innerHTML = '<p class="text-center text-xl text-red-600">A loja está temporariamente fechada para pedidos.</p>';
+        list.innerHTML = '<p class="text-center text-xl text-red-600 p-8">A loja está temporariamente fechada para pedidos. Verifique o horário de funcionamento.</p>';
         document.getElementById('cart-button').disabled = true;
     } else {
         document.getElementById('header-title').textContent = 'Faça seu Pedido';
@@ -104,13 +227,11 @@ function renderStore(data) {
 }
 
 function applyCustomization(custom) {
-    // Aplica as cores via CSS Variables
     const root = document.documentElement;
     root.style.setProperty('--primary-color', custom.colorPrimary);
     root.style.setProperty('--secondary-color', custom.colorSecondary);
     root.style.setProperty('--background-color', custom.backgroundColor);
     
-    // Aplica a logo
     const logoEl = document.getElementById('storeLogo');
     if (logoEl && custom.logoUrl) {
         logoEl.src = custom.logoUrl;
@@ -119,8 +240,7 @@ function applyCustomization(custom) {
 
 function renderCategories(categories) {
     const nav = document.getElementById('categories-nav');
-    nav.innerHTML = ''; // Limpa as categorias anteriores
-    
+    nav.innerHTML = ''; 
     categories.forEach(cat => {
         const tab = document.createElement('div');
         tab.className = 'category-tab';
@@ -128,28 +248,34 @@ function renderCategories(categories) {
         tab.setAttribute('data-category-id', cat.id);
         nav.appendChild(tab);
     });
-    // [PRÓXIMOS PASSOS] Adicionar a lógica de filtro
 }
 
 function renderProducts(products) {
     const list = document.getElementById('products-list');
     list.innerHTML = ''; 
-
+    
     products.forEach(prod => {
         const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        // HTML básico do produto (A ser estilizado no style.css e aprimorado)
+        productCard.className = 'product-card border p-4 rounded-lg shadow-md bg-white flex flex-col items-center text-center';
         productCard.innerHTML = `
-            <img src="${prod.imageUrl}" alt="${prod.name}">
-            <h3>${prod.name}</h3>
-            <p>R$ ${prod.price.toFixed(2).replace('.', ',')}</p>
-            <button class="add-to-cart-btn" data-product-id="${prod.id}">Adicionar</button>
+            <img src="${prod.imageUrl}" alt="${prod.name}" class="w-full h-32 object-cover mb-4 rounded-md">
+            <h3 class="font-bold text-lg mb-1">${prod.name}</h3>
+            <p class="text-xl font-extrabold text-green-700">R$ ${prod.price.toFixed(2).replace('.', ',')}</p>
+            <button class="add-to-cart-btn mt-3 w-full" style="background: var(--primary-color); color: white;" data-product-id="${prod.id}">Adicionar ao Pedido</button>
         `;
         list.appendChild(productCard);
     });
 }
 
-function toggleDrawer() {
-    document.getElementById('cart-drawer').classList.toggle('open');
-    document.getElementById('overlay').classList.toggle('active');
-}
+function toggleDrawer(forceOpen) {
+    const drawer = document.getElementById('cart-drawer');
+    const overlay = document.getElementById('overlay');
+    
+    if (forceOpen === true || !drawer.classList.contains('open')) {
+        drawer.classList.add('open');
+        overlay.classList.add('active');
+    } else {
+        drawer.classList.remove('open');
+        overlay.classList.remove('active');
+    }
+            }
