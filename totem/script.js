@@ -121,6 +121,7 @@ class Totem {
     
     // --- 4. PLAYER DE MÚSICA DO YOUTUBE ---
     initYoutubePlayer() {
+    initYoutubePlayer() {
         const musicUrl = this.storeData.customizacao.musicUrl;
         if (!musicUrl) {
             document.getElementById('musicToggleBtn').classList.add('hidden');
@@ -138,17 +139,20 @@ class Totem {
         this.player = new YT.Player('youtube-player', {
             videoId: videoId,
             playerVars: {
-                'autoplay': 0, 
+                'autoplay': 0, // Inicia como 0 devido ao bloqueio dos navegadores
                 'controls': 0, 
                 'loop': 1, 
-                'playlist': videoId, // Essencial para loop
+                'playlist': videoId, 
                 'modestbranding': 1,
                 'disablekb': 1,
-                'mute': 0, // Inicia desmutado, mas o usuário deve dar o play
+                'mute': 1, // Inicia mutado para aumentar as chances de inicialização
             },
             events: {
                 'onReady': (event) => {
+                    // Configura o volume desejado e muta por padrão
                     event.target.setVolume(this.storeData.customizacao.musicVolume || 50);
+                    event.target.mute(); 
+                    document.getElementById('musicToggleBtn').innerHTML = '🔇'; // Mostra que está mudo/parado
                 },
                 'onStateChange': (event) => {
                     // Estado 0 (ended), reinicia se estiver em loop
