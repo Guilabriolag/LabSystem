@@ -3,140 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serverless-System - Gerenciador CMS</title>
+    <title>LabSystem CMS - Gerenciamento Serverless</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css"> </head>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Estilo da aba ativa */
+        .active-tab {
+            border-bottom: 2px solid #4f46e5; /* indigo-600 */
+        }
+        /* Estilos para responsividade móvel (opcional, mas recomendado) */
+        @media (min-width: 1024px) {
+            .content-shifted {
+                margin-left: 280px;
+            }
+        }
+    </style>
+</head>
 <body class="bg-gray-100 min-h-screen">
 
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
-    <div id="app" class="flex">
-        
-        <aside id="sidebar" class="bg-white text-gray-800 shadow-lg h-screen fixed top-0 left-0 w-64 transition-all duration-300 z-20">
-            <div class="p-4 border-b">
-                <h1 class="text-xl font-bold text-indigo-600">LabSystem CMS</h1>
+    <header class="bg-indigo-600 text-white shadow-lg sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold">LabSystem CMS</h1>
+            <div class="flex items-center space-x-4">
+                <button id="saveBtn" class="bg-indigo-400 hover:bg-indigo-500 text-white px-4 py-2 rounded-md transition text-sm font-semibold" title="Salvar dados localmente">
+                    Salvar Rascunho
+                </button>
+                <a href="../totem/index1.html" target="_blank" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-2 rounded-md transition text-sm font-semibold">
+                    Ver Totem
+                </a>
             </div>
-            
-            <nav class="mt-4">
-                <a href="#" class="tab-btn p-4 flex items-center hover:bg-indigo-50 transition duration-150 active-tab" data-tab="loja">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7-7-7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7-7-7"></path></svg>
-                    <span class="nav-text">Dados da Loja</span>
-                </a>
-                
-                <a href="#" class="tab-btn p-4 flex items-center hover:bg-indigo-50 transition duration-150" data-tab="customizar">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h14a2 2 0 012 2v16a2 2 0 01-2 2H7zM7 11h10M7 15h10"></path></svg>
-                    <span class="nav-text">Customizar</span>
-                </a>
-
-                <a href="#" class="tab-btn p-4 flex items-center hover:bg-indigo-50 transition duration-150" data-tab="itens">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="nav-text">Itens e Preços</span>
-                </a>
-                
-                <a href="#" class="tab-btn p-4 flex items-center hover:bg-indigo-50 transition duration-150" data-tab="publicar">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
-                    <span class="nav-text font-bold text-green-600">Publicar (JSONBin)</span>
-                </a>
-
-            </nav>
-        </aside>
-
-        <main id="mainContent" class="flex-1 transition-all duration-300 p-6 ml-64">
-            
-            <header class="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-end space-x-3">
-                <button id="saveBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold transition">SALVAR LOCAL</button>
-                <button id="publishBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-semibold transition">PUBLICAR AGORA</button>
-                <button id="visitBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-full font-semibold transition" onclick="window.open('../totem/index.html', '_blank')">VISITAR TOTEM</button>
-            </header>
-
-            <div id="tab-content" class="bg-white p-6 rounded-lg shadow-md min-h-[70vh]">
-                
-                <section id="tab-loja" class="tab-section fade-in">
-                    <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Dados Operacionais e de Contato</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Status da Loja</span>
-                            <select id="storeStatus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                                <option value="open">Aberto (Aceitando Pedidos)</option>
-                                <option value="closed">Fechado (Pedidos Bloqueados)</option>
-                            </select>
-                        </label>
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Telefone WhatsApp (Apenas números)</span>
-                            <input type="text" id="whatsapp" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="5511999998888">
-                            <p class="text-xs text-gray-500 mt-1">Este número receberá os pedidos do Totem.</p>
-                        </label>
-                    </div>
-
-                    <h3 class="text-xl font-semibold mt-8 mb-4 border-b pb-1">Pagamentos</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Chave PIX</span>
-                            <input type="text" id="pixKey" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="chave@exemplo.com.br ou CNPJ/CPF">
-                        </label>
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Dados Bancários para Depósito</span>
-                            <input type="text" id="bankDetails" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Banco, Agência e Conta">
-                        </label>
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Chave Bitcoin (Lightning Network)</span>
-                            <input type="text" id="bitcoinLightning" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Endereço Lightning (Opcional)">
-                        </label>
-                    </div>
-                </section>
-                
-                <section id="tab-customizar" class="tab-section hidden fade-in">
-                    <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Aparência da Loja (Totem)</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl">
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Cor Principal (Primária)</span>
-                            <input type="color" id="colorPrimary" class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm p-1">
-                            <p class="text-xs text-gray-500 mt-1">Usada para botões de ação e destaques.</p>
-                        </label>
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Cor Secundária</span>
-                            <input type="color" id="colorSecondary" class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm p-1">
-                            <p class="text-xs text-gray-500 mt-1">Usada para cabeçalhos e fundos de destaque.</p>
-                        </label>
-                        <label class="block col-span-2">
-                            <span class="text-gray-700 font-medium">URL da Logo</span>
-                            <input type="url" id="logoUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="https://seudominio.com/logo.png">
-                        </label>
-                    </div>
-                </section>
-                    <section id="tab-itens" class="tab-section hidden fade-in">
-    <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Gerenciamento de Cardápio</h2>
-
-    <div id="lowStockAlerts" class="hidden p-4 mb-6 bg-red-100 border-l-4 border-red-500 text-red-700">
         </div>
-    <div class="mb-8 p-4 border rounded-lg bg-gray-50">
-...
-                    <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Gerenciamento de Cardápio</h2>
-                    <p class="text-gray-500">Esta seção será implementada no próximo passo para gerenciar Categorias, Produtos, Preços e Estoque.</p>
-                </section>
-                
-                <section id="tab-publicar" class="tab-section hidden fade-in">
-                    <h2 class="text-2xl font-semibold mb-4 border-b pb-2 text-indigo-700">Configuração de Publicação (JSONBin)</h2>
-                    <p class="text-sm text-gray-600 mb-6">Insira os dados do seu BIN para Leitura e Escrita. Lembre-se de criar um novo Bin para cada loja.</p>
+    </header>
 
-                    <div class="space-y-4 max-w-lg">
-                        
+    <nav class="bg-white shadow-md sticky top-[60px] z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8">
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="publicar">
+                    1. Publicar
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="loja">
+                    2. Dados da Loja
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="itens">
+                    3. Cardápio / Itens
+                </button>
+                <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="customizar">
+                    4. Customizar
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div id="tab-content">
+            
+            <section id="tab-publicar" class="tab-section fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Publicação e Sincronização</h2>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
+                    <h3 class="text-xl font-bold mb-4">Configuração do JSONBin (Backend Serverless)</h3>
+                    <p class="text-sm text-gray-600 mb-6">Estes dados são usados para enviar as configurações da sua loja para a internet.</p>
+                    
+                    <div class="space-y-4">
                         <label class="block">
-                            <span class="text-gray-700 font-medium">BIN ID da Loja (Chave Pública)</span>
-                            <input type="text" id="binId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: 660d5c07e41b4b70e17651a2" onchange="storeManager.saveLocalData()">
+                            <span class="text-gray-700 font-medium">BIN ID (ID Público da Loja)</span>
+                            <input type="text" id="binId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: 66e2c34dzz543a0d170940" onchange="storeManager.saveLocalData()">
+                            <p class="text-xs text-gray-500 mt-1">Este ID é o que o seu Totem usa para ler os dados.</p>
                         </label>
                         
                         <label class="block">
                             <span class="text-gray-700 font-medium">Chave Secreta (Master Key - JSONBin)</span>
                             <input type="password" id="masterKey" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Sua Chave Mestra para Escrita (PUT)" onchange="storeManager.saveLocalData()">
-                            ...
-                        <label class="block">
-                            <span class="text-gray-700 font-medium">Chave Secreta (Master Key - JSONBin)</span>
-                            <input type="password" id="masterKey" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Sua Chave Mestra para Escrita (PUT)" onchange="storeManager.saveLocalData()">
+                            <p class="text-xs text-red-500 mt-1">Mantenha esta chave em segredo!</p>
                         </label>
-                        
+
                         <div class="border-t pt-4 mt-6">
                             <h3 class="font-bold text-gray-700 mb-2">Backup Local (Segurança)</h3>
                             <div class="flex space-x-3">
@@ -148,22 +99,159 @@
                                 </button>
                             </div>
                         </div>
-                        <button id="publishBtnSection" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition mt-6" onclick="storeManager.publishData()">
-                            PUBLICAR E SINCRONIZAR DADOS (JSONBin)
-                        </button>
-...
-                        </label>
-
-                        <button id="publishBtnSection" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition mt-6" onclick="storeManager.publishData()">
+                        <button id="publishBtn" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition mt-6" onclick="storeManager.publishData()">
                             PUBLICAR E SINCRONIZAR DADOS (JSONBin)
                         </button>
                     </div>
-                </section>
+                </div>
+            </section>
+            
+            <section id="tab-loja" class="tab-section hidden fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Configurações Operacionais e Pagamento</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">Operação e Contato</h3>
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Status da Loja</span>
+                                <select id="storeStatus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" onchange="storeManager.saveLocalData()">
+                                    <option value="open">Aberta (Recebendo Pedidos)</option>
+                                    <option value="closed">Fechada (Temporariamente Indisponível)</option>
+                                </select>
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">WhatsApp para Pedidos (apenas números, com DDI/DDD)</span>
+                                <input type="text" id="whatsapp" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: 5511999998888" onchange="storeManager.saveLocalData()">
+                            </label>
+                        </div>
+                    </div>
 
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">Informações de Pagamento</h3>
+                        <p class="text-sm text-gray-600 mb-4">Estas informações são enviadas automaticamente no link de checkout do WhatsApp.</p>
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Chave PIX</span>
+                                <input type="text" id="pixKey" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Chave Aleatória, CPF, E-mail ou Telefone" onchange="storeManager.saveLocalData()">
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Detalhes Bancários (Opcional)</span>
+                                <textarea id="bankDetails" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Banco, Agência, Conta, Nome do Titular" onchange="storeManager.saveLocalData()"></textarea>
+                            </label>
+
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Lightning Address (Bitcoin - Opcional)</span>
+                                <input type="text" id="bitcoinLightning" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="ex: satoshi@venda.com" onchange="storeManager.saveLocalData()">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-itens" class="tab-section hidden fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Gerenciamento de Cardápio</h2>
+
+                <div id="lowStockAlerts" class="hidden p-4 mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-md">
+                    </div>
+                <div class="mb-8 p-4 border rounded-lg bg-gray-50">
+                    <h3 class="text-xl font-bold mb-3">Categorias</h3>
+                    <div class="flex space-x-2 mb-4">
+                        <input type="text" id="newCategoryName" class="p-2 border rounded-md flex-1" placeholder="Nome da nova categoria (Ex: Pizzas, Bebidas)">
+                        <button onclick="storeManager.addCategory()" class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 transition">Adicionar Categoria</button>
+                    </div>
+                    <div id="categoriesList" class="space-y-2">
+                        </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold mb-3">Produtos</h3>
+                    <button onclick="storeManager.openProductModal()" class="bg-green-500 text-white px-4 py-2 rounded-md mb-4 hover:bg-green-600 transition">Novo Produto</button>
+                    
+                    <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">Produto</th>
+                                    <th class="py-3 px-6 text-left">Categoria</th>
+                                    <th class="py-3 px-6 text-left">Preço</th>
+                                    <th class="py-3 px-6 text-left">Estoque</th>
+                                    <th class="py-3 px-6 text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody" class="text-gray-600 text-sm font-light">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-customizar" class="tab-section hidden fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Customização Visual do Totem</h2>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-lg">
+                    <h3 class="text-xl font-bold mb-4">Esquema de Cores</h3>
+                    <p class="text-sm text-gray-600 mb-6">As cores primária e secundária serão aplicadas ao cabeçalho, botões e destaques do seu Totem público.</p>
+                    
+                    <div class="space-y-4">
+                        <label class="block flex items-center space-x-4">
+                            <span class="text-gray-700 font-medium w-32">Cor Primária:</span>
+                            <input type="color" id="colorPrimary" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
+                            <input type="text" id="colorPrimaryText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#10B981" onchange="document.getElementById('colorPrimary').value = this.value; storeManager.saveLocalData()">
+                        </label>
+                        
+                        <label class="block flex items-center space-x-4">
+                            <span class="text-gray-700 font-medium w-32">Cor Secundária:</span>
+                            <input type="color" id="colorSecondary" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
+                            <input type="text" id="colorSecondaryText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#059669" onchange="document.getElementById('colorSecondary').value = this.value; storeManager.saveLocalData()">
+                        </label>
+                        
+                        <label class="block flex items-center space-x-4">
+                            <span class="text-gray-700 font-medium w-32">Cor de Fundo:</span>
+                            <input type="color" id="backgroundColor" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
+                            <input type="text" id="backgroundColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#f9f9f9" onchange="document.getElementById('backgroundColor').value = this.value; storeManager.saveLocalData()">
+                        </label>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t">
+                        <h3 class="text-xl font-bold mb-4">Logo da Loja</h3>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">URL da Imagem da Logo</span>
+                            <input type="url" id="logoUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://i.imgur.com/sua_logo.png" onchange="storeManager.saveLocalData()">
+                        </label>
+                    </div>
+                </div>
+            </section>
+            
             </div>
-        </main>
-    </div>
+    </main>
 
+    <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 100;">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4">Adicionar Novo Produto</h3>
+            <form id="productForm" class="space-y-4">
+                <input type="hidden" id="productId">
+                
+                <label class="block">Nome: <input type="text" id="productName" required class="mt-1 block w-full border rounded-md p-2"></label>
+                <label class="block">Preço (R$): <input type="number" id="productPrice" step="0.01" required class="mt-1 block w-full border rounded-md p-2"></label>
+                <label class="block">Estoque: <input type="number" id="productStock" required class="mt-1 block w-full border rounded-md p-2"></label>
+                <label class="block">URL da Imagem: <input type="url" id="productImageUrl" class="mt-1 block w-full border rounded-md p-2"></label>
+                
+                <label class="block">Categoria: 
+                    <select id="productCategoryId" required class="mt-1 block w-full border rounded-md p-2">
+                        </select>
+                </label>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="storeManager.closeProductModal()" class="bg-gray-300 px-4 py-2 rounded-md">Cancelar</button>
+                    <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded-md">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
-                      </html>
+</html>
