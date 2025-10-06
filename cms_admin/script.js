@@ -46,74 +46,80 @@ const defaultData = {
     // ... Outras seções como cupons, publicidade, etc.
 };
 
-
-class StoreManager {
-    constructor() {
-        this.dataKey = 'labsystem_store_data'; // Chave mestra no localStorage
-        this.data = {};
-        this.init();
-    }
-
-    // Inicializa: Tenta carregar dados locais ou usa defaults.
-    init() {
-        this.loadLocalData();
-        this.setupEventListeners();
-        this.renderFormFields(); // Atualiza a UI com os dados carregados
-        this.switchTab('publicar'); // Começa na aba mais importante para o fluxo inicial
-    }
+// ... (O início do script e a classe StoreManager)
 
     // ====================================================================
-    // MÉTODOS DE PERSISTÊNCIA LOCAL (LOCAL STORAGE)
+    // MÉTODOS DE COLETA DE DADOS DO FORMULÁRIO (INPUT)
     // ====================================================================
 
-    // Carrega dados do localStorage ou usa o default
-    loadLocalData() {
-        try {
-            const savedData = localStorage.getItem(this.dataKey);
-            if (savedData) {
-                this.data = JSON.parse(savedData);
-                console.log('Dados carregados do LocalStorage.');
-            } else {
-                this.data = JSON.parse(JSON.stringify(defaultData)); // Deep copy do default
-                console.log('Dados padrão carregados.');
-            }
-        } catch (e) {
-            console.error('Erro ao carregar dados locais:', e);
-            this.data = JSON.parse(JSON.stringify(defaultData));
-        }
-    }
-
-    // Salva o estado atual para o localStorage
-    saveLocalData() {
-        try {
-            // Antes de salvar, garantir que os campos de Publicação (BIN ID/KEY) estão na memória
-            this.collectPublicationFields(); 
-            
-            localStorage.setItem(this.dataKey, JSON.stringify(this.data));
-            this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
-        } catch (e) {
-            this.toast('❌ Erro ao salvar dados localmente.', 'bg-red-500');
-            console.error('Erro ao salvar no LocalStorage:', e);
-        }
-    }
-
-    // Coleta os valores do formulário e atualiza o objeto this.data
-    // Esta é uma função placeholder que você irá expandir
+    // Função Mestra: Coleta TODOS os dados do formulário e atualiza this.data
     collectDataFromForms() {
-        // [PASSO 3.3] IMPLEMENTAR A COLETA DE TODOS OS CAMPOS DO CMS PARA 'this.data'
-        this.collectPublicationFields(); // Por agora, apenas os campos de publicação
+        this.collectPublicationFields();
         this.collectCustomizationFields();
-        // ... outros campos (itens, pagamento, etc)
+        this.collectDadosLojaFields();
+        // ... Chamar outras funções de coleta (itens, cupons, etc)
     }
 
-    // Coleta BIN ID e Master Key (CRÍTICO)
+    // Coleta BIN ID e Master Key
     collectPublicationFields() {
-        const binId = document.getElementById('binId')?.value || '';
-        const masterKey = document.getElementById('masterKey')?.value || '';
-        
-        this.data.configuracoes.binId = binId;
-        this.data.configuracoes.masterKey = masterKey;
+        this.data.configuracoes.binId = document.getElementById('binId')?.value || '';
+        this.data.configuracoes.masterKey = document.getElementById('masterKey')?.value || '';
     }
+
+    // Coleta Dados Operacionais e Pagamento
+    collectDadosLojaFields() {
+        this.data.configuracoes.storeStatus = document.getElementById('storeStatus')?.value || 'closed';
+        this.data.configuracoes.whatsapp = document.getElementById('whatsapp')?.value || '';
+        
+        this.data.pagamento.pixKey = document.getElementById('pixKey')?.value || '';
+        this.data.pagamento.bankDetails = document.getElementById('bankDetails')?.value || '';
+        this.data.pagamento.bitcoinLightning = document.getElementById('bitcoinLightning')?.value || '';
+    }
+    
+    // Coleta Customização
+    collectCustomizationFields() {
+        this.data.customizacao.colorPrimary = document.getElementById('colorPrimary')?.value || '#000000';
+        this.data.customizacao.colorSecondary = document.getElementById('colorSecondary')?.value || '#000000';
+        this.data.customizacao.logoUrl = document.getElementById('logoUrl')?.value || '';
+    }
+
+
+    // ====================================================================
+    // MÉTODOS DE RENDERIZAÇÃO DOS DADOS NO FORMULÁRIO (OUTPUT)
+    // ====================================================================
+    
+    // Renderiza os valores de this.data nos campos de formulário (CMS)
+    renderFormFields() {
+        const d = this.data;
+
+        // 1. Configurações de Publicação (Publicar)
+        if (document.getElementById('binId')) {
+            document.getElementById('binId').value = d.configuracoes.binId || '';
+            document.getElementById('masterKey').value = d.configuracoes.masterKey || '';
+        }
+
+        // 2. Dados Operacionais (Loja)
+        if (document.getElementById('storeStatus')) {
+            document.getElementById('storeStatus').value = d.configuracoes.storeStatus || 'closed';
+            document.getElementById('whatsapp').value = d.configuracoes.whatsapp || '';
+        }
+        
+        // 3. Dados de Pagamento (Loja)
+        if (document.getElementById('pixKey')) {
+            document.getElementById('pixKey').value = d.pagamento.pixKey || '';
+            document.getElementById('bankDetails').value = d.pagamento.bankDetails || '';
+            document.getElementById('bitcoinLightning').value = d.pagamento.bitcoinLightning || '';
+        }
+
+        // 4. Customização (Customizar)
+        if (document.getElementById('colorPrimary')) {
+            document.getElementById('colorPrimary').value = d.customizacao.colorPrimary || '#000000';
+            document.getElementById('colorSecondary').value = d.customizacao.colorSecondary || '#000000';
+            document.getElementById('logoUrl').value = d.customizacao.logoUrl || '';
+        }
+    }
+
+// ... (O restante do script, incluindo publishData e a inicialização)
 
     // ====================================================================
     // MÉTODOS DE SINCRONIZAÇÃO REMOTA (JSONBIN) - Próximo Passo
