@@ -46,7 +46,7 @@ async function initTotem() {
 }
 
 async function loadRemoteData() {
-    if (!CLIENT_BIN_ID || CLIENT_BIN_ID === 'SUA_BIN_ID_DE_TESTE') return null;
+    if (!CLIENT_BIN_ID || CLIENT_BIN_ID === '68e36776ae596e708f07b93a') return null;
 
     const url = `https://api.jsonbin.io/v3/b/${CLIENT_BIN_ID}/latest`;
     
