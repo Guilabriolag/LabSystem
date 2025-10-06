@@ -2,132 +2,256 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>LabSystem Totem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabSystem CMS - Gerenciamento Serverless</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Variáveis CSS para customização dinâmica (definidas pelo CMS) */
-        :root {
-            --color-primary: #10B981; /* Default: Emerald Green */
-            --color-secondary: #059669; 
-            --bg-color: #f9f9f9;
-        }
-
         body {
+            box-sizing: border-box;
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
         }
-
-        /* Estilos aplicados com as cores do CMS */
-        .bg-primary { background-color: var(--color-primary); }
-        .text-primary { color: var(--color-primary); }
-        .hover\:bg-primary-dark:hover { background-color: var(--color-secondary); }
-        .border-primary { border-color: var(--color-primary); }
-
-        /* Ajuste para rolagem suave ao clicar no menu lateral */
-        html { scroll-behavior: smooth; }
-
-        /* Estilo da barra de carrinho móvel */
-        .cart-bar-mobile {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-        }
-
-        /* Classes de animação */
         .fade-in {
             animation: fadeIn 0.3s ease-in;
         }
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Oculta a barra lateral no mobile */
-        @media (max-width: 1023px) {
-            #sidebar {
-                display: none;
-            }
+        /* Estilo da aba ativa */
+        .active-tab {
+            border-bottom: 2px solid #4f46e5; /* indigo-600 */
         }
-        /* Fixa a barra lateral no desktop */
+        /* Estilos para responsividade móvel (opcional, mas recomendado) */
         @media (min-width: 1024px) {
-            #sidebar {
-                display: block;
-                height: calc(100vh - 80px); /* Altura da tela menos o header */
-                top: 80px;
-                width: 16rem; /* w-64 */
-            }
-            #main-content {
-                margin-left: 16rem; /* Desloca o conteúdo para caber a sidebar */
+            .content-shifted {
+                margin-left: 280px;
             }
         }
-
     </style>
 </head>
-<body class="pb-20 lg:pb-0">
+<body class="bg-gray-100 min-h-screen">
 
-    <header class="bg-primary text-white shadow-lg sticky top-0 z-30 h-20">
-        <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <img id="store-logo" src="https://via.placeholder.com/50x50/10B981/ffffff?text=L" alt="Logo" class="h-10 w-10 rounded-full">
-                <h1 id="store-name" class="text-xl font-extrabold">LabSystem Totem</h1>
+    <header class="bg-indigo-600 text-white shadow-lg sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold">LabSystem CMS</h1>
+            <div class="flex items-center space-x-4">
+                <button id="saveBtn" class="bg-indigo-400 hover:bg-indigo-500 text-white px-4 py-2 rounded-md transition text-sm font-semibold" title="Salvar dados localmente">
+                    Salvar Rascunho
+                </button>
+                <a href="../totem/index1.html" target="_blank" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-2 rounded-md transition text-sm font-semibold">
+                    Ver Totem
+                </a>
             </div>
-            
-            <button id="checkout-btn-desktop" class="hidden lg:flex bg-white text-primary px-4 py-2 rounded-full font-bold shadow-lg transition duration-300 opacity-0 pointer-events-none items-center space-x-2" onclick="totemApp.openCartModal()">
-                <span>Ver Carrinho (<span id="cart-count-desktop">0</span>)</span>
-                <span class="ml-2">|</span>
-                <span id="cart-total-desktop">R$ 0,00</span>
-            </button>
         </div>
     </header>
 
-    <aside id="sidebar" class="fixed bg-white shadow-xl p-4 overflow-y-auto">
-        <h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Categorias</h3>
-        <ul id="sidebar-menu" class="space-y-1">
-            </ul>
-    </aside>
-
-    <main id="main-content" class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <div id="sections-container">
-            <p class="text-center text-gray-500 mt-12">Carregando dados da loja...</p>
+    <nav class="bg-white shadow-md sticky top-[60px] z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex space-x-8">
+            <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="publicar">
+                1. Publicar
+            </button>
+            <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="loja">
+                2. Dados da Loja
+            </button>
+            <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="itens">
+                3. Cardápio / Itens
+            </button>
+            <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 transition duration-300" data-tab="customizar">
+                4. Customizar
+            </button>
         </div>
+    </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        <div id="tab-content">
+            
+            <section id="tab-publicar" class="tab-section fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Publicação e Sincronização</h2>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
+                    <h3 class="text-xl font-bold mb-4">Configuração do JSONBin (Backend Serverless)</h3>
+                    <p class="text-sm text-gray-600 mb-6">Estes dados são usados para enviar as configurações da sua loja para a internet.</p>
+                    
+                    <div class="space-y-4">
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">BIN ID (ID Público da Loja)</span>
+                            <input type="text" id="binId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: 66e2c34dzz543a0d170940" onchange="storeManager.saveLocalData()">
+                            <p class="text-xs text-gray-500 mt-1">Este ID é o que o seu Totem usa para ler os dados.</p>
+                        </label>
+                        
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Chave Secreta (Master Key - JSONBin)</span>
+                            <input type="password" id="masterKey" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Sua Chave Mestra para Escrita (PUT)" onchange="storeManager.saveLocalData()">
+                            <p class="text-xs text-red-500 mt-1">Mantenha esta chave em segredo!</p>
+                        </label>
+
+                        <div class="border-t pt-4 mt-6">
+                            <h3 class="font-bold text-gray-700 mb-2">Backup Local (Segurança)</h3>
+                            <div class="flex space-x-3">
+                                <button type="button" onclick="storeManager.exportData()" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md transition text-sm">
+                                    Exportar Dados (Backup)
+                                </button>
+                                <button type="button" onclick="storeManager.triggerImport()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition text-sm">
+                                    Importar Dados (Restore)
+                                </button>
+                            </div>
+                        </div>
+                        <button id="publishBtn" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition mt-6" onclick="storeManager.publishData()">
+                            PUBLICAR E SINCRONIZAR DADOS (JSONBin)
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="tab-loja" class="tab-section hidden fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Configurações Operacionais e Pagamento</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">Operação e Contato</h3>
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Status da Loja</span>
+                                <select id="storeStatus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" onchange="storeManager.saveLocalData()">
+                                    <option value="open">Aberta (Recebendo Pedidos)</option>
+                                    <option value="closed">Fechada (Temporariamente Indisponível)</option>
+                                </select>
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">WhatsApp para Pedidos (apenas números, com DDI/DDD)</span>
+                                <input type="text" id="whatsapp" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: 5511999998888" onchange="storeManager.saveLocalData()">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-4">Informações de Pagamento</h3>
+                        <p class="text-sm text-gray-600 mb-4">Estas informações são enviadas automaticamente no link de checkout do WhatsApp.</p>
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Chave PIX</span>
+                                <input type="text" id="pixKey" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Chave Aleatória, CPF, E-mail ou Telefone" onchange="storeManager.saveLocalData()">
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Detalhes Bancários (Opcional)</span>
+                                <textarea id="bankDetails" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Banco, Agência, Conta, Nome do Titular" onchange="storeManager.saveLocalData()"></textarea>
+                            </label>
+
+                            <label class="block">
+                                <span class="text-gray-700 font-medium">Lightning Address (Bitcoin - Opcional)</span>
+                                <input type="text" id="bitcoinLightning" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="ex: satoshi@venda.com" onchange="storeManager.saveLocalData()">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-itens" class="tab-section hidden fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Gerenciamento de Cardápio</h2>
+
+                <div id="lowStockAlerts" class="hidden p-4 mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-md">
+                    </div>
+                <div class="mb-8 p-4 border rounded-lg bg-gray-50">
+                    <h3 class="text-xl font-bold mb-3">Categorias</h3>
+                    <div class="flex space-x-2 mb-4">
+                        <input type="text" id="newCategoryName" class="p-2 border rounded-md flex-1" placeholder="Nome da nova categoria (Ex: Pizzas, Bebidas)">
+                        <button onclick="storeManager.addCategory()" class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 transition">Adicionar Categoria</button>
+                    </div>
+                    <div id="categoriesList" class="space-y-2">
+                        </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold mb-3">Produtos</h3>
+                    <button onclick="storeManager.openProductModal()" class="bg-green-500 text-white px-4 py-2 rounded-md mb-4 hover:bg-green-600 transition">Novo Produto</button>
+                    
+                    <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">Produto</th>
+                                    <th class="py-3 px-6 text-left">Categoria</th>
+                                    <th class="py-3 px-6 text-left">Preço</th>
+                                    <th class="py-3 px-6 text-left">Estoque</th>
+                                    <th class="py-3 px-6 text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody" class="text-gray-600 text-sm font-light">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-customizar" class="tab-section hidden fade-in">
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2 text-indigo-700">Customização Visual do Totem</h2>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-lg">
+                    <h3 class="text-xl font-bold mb-4">Esquema de Cores</h3>
+                    <p class="text-sm text-gray-600 mb-6">As cores primária e secundária serão aplicadas ao cabeçalho, botões e destaques do seu Totem público.</p>
+                    
+                    <div class="space-y-4">
+                        <label class="block flex items-center space-x-4">
+                            <span class="text-gray-700 font-medium w-32">Cor Primária:</span>
+                            <input type="color" id="colorPrimary" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
+                            <input type="text" id="colorPrimaryText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#10B981" onchange="document.getElementById('colorPrimary').value = this.value; storeManager.saveLocalData()">
+                        </label>
+                        
+                        <label class="block flex items-center space-x-4">
+                            <span class="text-gray-700 font-medium w-32">Cor Secundária:</span>
+                            <input type="color" id="colorSecondary" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
+                            <input type="text" id="colorSecondaryText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#059669" onchange="document.getElementById('colorSecondary').value = this.value; storeManager.saveLocalData()">
+                        </label>
+                        
+                        <label class="block flex items-center space-x-4">
+                            <span class="text-gray-700 font-medium w-32">Cor de Fundo:</span>
+                            <input type="color" id="backgroundColor" class="h-10 w-10 p-1 border rounded-md" onchange="storeManager.saveLocalData()">
+                            <input type="text" id="backgroundColorText" class="flex-1 rounded-md border-gray-300 shadow-sm p-2 text-sm" placeholder="#f9f9f9" onchange="document.getElementById('backgroundColor').value = this.value; storeManager.saveLocalData()">
+                        </label>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t">
+                        <h3 class="text-xl font-bold mb-4">Logo da Loja</h3>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">URL da Imagem da Logo</span>
+                            <input type="url" id="logoUrl" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Ex: https://i.imgur.com/sua_logo.png" onchange="storeManager.saveLocalData()">
+                        </label>
+                    </div>
+                </div>
+            </section>
+            
+            </div>
     </main>
 
-    <div class="cart-bar-mobile lg:hidden bg-primary text-white shadow-2xl p-3">
-        <button id="checkout-btn" class="w-full bg-white text-primary px-4 py-3 rounded-xl font-bold flex justify-between items-center transition duration-300 opacity-0 pointer-events-none shadow-xl" onclick="totemApp.openCartModal()">
-            <span>Ver Carrinho (<span id="cart-count">0</span>)</span>
-            <span id="cart-total" class="text-lg">R$ 0,00</span>
-        </button>
-    </div>
-
-    <div id="cart-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-lg overflow-hidden fade-in">
-            <div class="p-5 border-b flex justify-between items-center">
-                <h3 class="text-2xl font-bold">Seu Pedido</h3>
-                <button id="cart-modal-close" class="text-gray-500 hover:text-gray-900 text-3xl leading-none">&times;</button>
-            </div>
-            
-            <div class="p-5 max-h-80 overflow-y-auto">
-                <ul id="cart-items-list" class="space-y-3">
-                    </ul>
-            </div>
-            
-            <div class="p-5 bg-gray-50 border-t">
-                <div class="flex justify-between items-center text-xl font-bold mb-4">
-                    <span>Total:</span>
-                    <span id="modal-cart-total">R$ 0,00</span>
+    <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 100;">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4">Adicionar Novo Produto</h3>
+            <form id="productForm" class="space-y-4">
+                <input type="hidden" id="productId">
+                
+                <label class="block">Nome: <input type="text" id="productName" required class="mt-1 block w-full border rounded-md p-2"></label>
+                <label class="block">Preço (R$): <input type="number" id="productPrice" step="0.01" required class="mt-1 block w-full border rounded-md p-2"></label>
+                <label class="block">Estoque: <input type="number" id="productStock" required class="mt-1 block w-full border rounded-md p-2"></label>
+                <label class="block">URL da Imagem: <input type="url" id="productImageUrl" class="mt-1 block w-full border rounded-md p-2"></label>
+                
+                <label class="block">Categoria: 
+                    <select id="productCategoryId" required class="mt-1 block w-full border rounded-md p-2">
+                        </select>
+                </label>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="storeManager.closeProductModal()" class="bg-gray-300 px-4 py-2 rounded-md">Cancelar</button>
+                    <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded-md">Salvar Produto</button>
                 </div>
-                <button id="modal-checkout-final" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 w-full rounded-lg transition duration-300" onclick="totemApp.initiateCheckout()">
-                    Finalizar Pedido (WhatsApp)
-                </button>
-            </div>
+            </form>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
-</html>
+                        </html>
