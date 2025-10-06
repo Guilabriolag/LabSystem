@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="storeName">LabSystem - Cardápio Online</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body id="totem-body">
+
+    <header id="totem-header">
+        <img id="storeLogo" src="https://via.placeholder.com/100x40?text=Logo" alt="Logo da Loja" class="logo">
+        <h1 id="header-title">Bem-vindo!</h1>
+        <button id="cart-button" class="cart-btn">
+            Carrinho (
+            <span id="cart-count">0</span>
+            )
+        </button>
+    </header>
+
+    <main class="content-container">
+        <nav id="categories-nav" class="categories-nav">
+            </nav>
+
+        <section id="products-list" class="products-grid">
+            <p id="loading-message">Carregando cardápio... Aguarde.</p>
+        </section>
+    </main>
+
+    <div id="cart-drawer" class="cart-drawer">
+        <div class="drawer-header">
+            <h2>Seu Pedido</h2>
+            <button class="close-btn" onclick="toggleDrawer()">X</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <p id="empty-cart-message">O carrinho está vazio.</p>
+        </div>
+        <div class="drawer-footer">
+            <div class="total-area">
+                <span>Total:</span>
+                <span id="cart-total" class="total-price">R$ 0,00</span>
+            </div>
+            <button id="checkout-btn" class="checkout-btn" disabled>Finalizar Pedido</button>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay" onclick="toggleDrawer()"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
