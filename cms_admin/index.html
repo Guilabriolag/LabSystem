@@ -1,95 +1,23 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Labriolag</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body, html {
-      height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #121212;
-      color: white;
-      overflow: hidden;
-    }
-
-    .splash {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background-color: #1f1f1f;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      animation: fadeOut 1s ease-in-out 3s forwards;
-    }
-
-    .splash img {
-      width: 150px;
-      height: auto;
-      animation: bounce 2s infinite;
-    }
-
-    .splash h1 {
-      margin-top: 20px;
-      font-size: 2em;
-      color: #00ffcc;
-      animation: fadeIn 2s ease-in;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-20px); }
-    }
-
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .main {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background-color: #121212;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      animation: showMain 1s ease-in-out 4s forwards;
-    }
-
-    @keyframes showMain {
-      to { opacity: 1; }
-    }
-
-    .main h2 {
-      font-size: 2em;
-      color: #ffffff;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bem-vindo ao CMS Admin</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f0f0; }
+        .container { text-align: center; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #4F46E5; }
+        /* Redireciona automaticamente após 2 segundos */
+        meta[http-equiv="refresh"] { content: "2; url=index1.html"; } 
+    </style>
+    <meta http-equiv="refresh" content="2; url=index1.html">
 </head>
 <body>
-
-  <div class="splash">
-    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7T-L3I1t95j33Pu9cdst8hHJShqSHsjSu09-kpkNNWxkb1R2hhTSqdr3DGtTmv74y6gxla4YUaGzThga3M1UaJcPuterWAMycodowVFBpHRMmRPmOmI3zpexmBBaiHg6Mvb24ggw1dcJ3Hh8CZFRho4PjBcGxhRzR9rkcx-x1hpLpHBlEmIEyRwE3n-By/s756/20250918_001110.png" alt="Logo Labriolag">
-    <h1>Labriolag</h1>
-  </div>
-
-  <div class="main">
-    <h2>🚧 Em desenvolvimento 🚧</h2>
-  </div>
-
+    <div class="container">
+        <img src="../assets/logo.png" alt="Logo" style="max-width: 100px; margin-bottom: 20px;">
+        <h1>CMS Admin</h1>
+        <p>Bem-vindo, Guilabriolag! Carregando Painel de Configuração...</p>
+    </div>
 </body>
 </html>
