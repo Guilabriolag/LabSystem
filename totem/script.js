@@ -166,10 +166,13 @@ class Totem {
         const btn = document.getElementById('musicToggleBtn');
 
         if (this.isMusicPlaying) {
+            // Se estiver tocando, pausa
             this.player.pauseVideo();
             btn.innerHTML = '🔇';
             this.isMusicPlaying = false;
         } else {
+            // Se não estiver tocando, força o play e desmuta
+            this.player.unMute(); 
             this.player.playVideo();
             btn.innerHTML = '🔊';
             this.isMusicPlaying = true;
