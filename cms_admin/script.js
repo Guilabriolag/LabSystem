@@ -165,9 +165,12 @@ class StoreManager {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO ROBUSTA
+// INICIALIZAÇÃO ROBUSTA (A PARTE MAIS IMPORTANTE)
 // ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Cria a instância da classe
     window.storeManager = new StoreManager();
+    
+    // 2. Chama a função de inicialização
     window.storeManager.init(); 
 });
