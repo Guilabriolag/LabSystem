@@ -1,177 +1,47 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LabSystem Boot</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #000;
-      font-family: 'Courier New', monospace;
-      color: #fff;
-      overflow: hidden;
-    }
-    canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 0;
-    }
-    .intro {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1;
-    }
-    .logo {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      margin-bottom: 20px;
-      box-shadow: 0 0 20px #00f6ff, 0 0 40px #00f6ff, 0 0 60px #00f6ff;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.9; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #ffffff;
-      margin-bottom: 40px;
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 2px solid #fff;
-      animation: typing 2.5s steps(40, end) forwards;
-    }
-    @keyframes typing {
-      from { width: 0 }
-      to { width: 100% }
-    }
-    .buttons {
-      position: absolute;
-      bottom: 60px;
-      display: flex;
-      gap: 20px;
-      z-index: 2;
-    }
-    .btn {
-      background: #00f6ff;
-      color: #000;
-      padding: 10px 20px;
-      font-weight: bold;
-      border-radius: 5px;
-      text-decoration: none;
-      opacity: 0;
-      transform: translateX(0);
-      transition: transform 0.5s ease, opacity 0.5s ease;
-    }
-    .btn.access {
-      animation: slideInRight 0.8s ease 2.9s forwards;
-    }
-    .btn.labriolag {
-      animation: slideInLeft 0.8s ease 2.9s forwards;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(100px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideInLeft {
-      from { transform: translateX(-100px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    /* Oculta o player do YouTube */
-    .audio {
-      position: absolute;
-      width: 0;
-      height: 0;
-      overflow: hidden;
-    }
-  </style>
-</head>
-<body>
-  <canvas id="particles"></canvas>
+LabSystem
+O LabSystem é um sistema de Gerenciamento de Conteúdo (CMS) Serverless personalizado, projetado para ser uma solução completa para lojas — como restaurantes, lanchonetes ou cafés — que necessitam de um Totem Digital (lado do cliente) e um Painel de Administração (lado gerencial), sem depender de um servidor de hospedagem tradicional.
 
-  <div class="intro">
-    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7T-L3I1t95j33Pu9cdst8hHJShqSHsjSu09-kpkNNWxkb1R2hhTSqdr3DGtTmv74y6gxla4YUaGzThga3M1UaJcPuterWAMycodowVFBpHRMmRPmOmI3zpexmBBaiHg6Mvb24ggw1dcJ3Hh8CZFRho4PjBcGxhRzR9rkcx-x1hpLpHBlEmIEyRwE3n-By/s756/20250918_001110.png" alt="Logo LabSystem" class="logo" />
-    <div class="title">Inicializando LabSystem Store...</div>
-    <div class="buttons">
-      <a href="https://guilabriolag.github.io/LabSpace/LabSystem/testeREADME" class="btn access">🧭 Acessar</a>
-      <a href="https://guilabriolag.github.io/HUB/" class="btn labriolag">🧠 Labriolag</a>
-    </div>
-  </div>
+O que é o LabSystem?
+O LabSystem é um ecossistema digital dividido em duas partes principais, que funcionam de forma independente e utilizam um banco de dados em nuvem simples (como o JSONBin) para sincronização.
 
-  <!-- Som de fundo via YouTube -->
-  <div class="audio">
-    <iframe width="0" height="0" src="https://www.youtube.com/embed/CzfYPv4MtOM?autoplay=1&loop=1&playlist=CzfYPv4MtOM" frameborder="0" allow="autoplay"></iframe>
-  </div>
+1. Painel CMS de Gerenciamento (CMS Control)
+Interface administrativa (index1.html) com foco em UI/UX avançado, responsável por controlar toda a operação da loja.
 
-  <script>
-    const canvas = document.getElementById('particles');
-    const ctx = canvas.getContext('2d');
-    let particlesArray;
+Módulo
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+Descrição
 
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      init();
-    });
+Publicação
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
-        this.color = Math.random() < 0.95 ? '#00f6ff' : '#ffe600'; // 95% azul, 5% amarelo raio
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-      draw() {
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+Sincroniza e envia todos os dados (cardápio, cores, status) para o Totem Digital usando o JSONBin e a Master Key.
 
-    function init() {
-      particlesArray = [];
-      for (let i = 0; i < 120; i++) {
-        particlesArray.push(new Particle());
-      }
-    }
+Dados Operacionais
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particlesArray.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      requestAnimationFrame(animate);
-    }
+Gerencia informações vitais da loja, como Status de Abertura/Fechamento, contato via WhatsApp, e Taxas/Áreas de Entrega (por bairro/tempo).
 
-    init();
-    animate();
-  </script>
-</body>
-</html>
+Cardápio / Itens
+
+Controla Categorias e Produtos, incluindo nome, preço, imagem, estoque e alertas de baixo estoque.
+
+Customizar Totem
+
+Define a experiência visual do Totem, ajustando cores, logo, imagem de fundo e música ambiente (via URL do YouTube) com controle de volume.
+
+2. Totem / Loja Digital (Lado do Cliente)
+Interface exibida ao cliente (por exemplo, em /totem/index1.html), que lê os dados publicados no JSONBin e apresenta o cardápio, cores e status da loja em tempo real.
+
+Principais Pilares do Conceito Serverless
+O LabSystem adota uma arquitetura Serverless (Sem Servidor), baseada em simplicidade, autonomia e baixo custo operacional.
+
+Armazenamento Local (Rascunho): Todos os ajustes feitos no Painel CMS são salvos inicialmente no navegador, via LocalStorage, permitindo edição offline e segurança de dados antes da publicação.
+Sincronização na Nuvem: Ao acionar “Publicar e Sincronizar Dados”, as informações locais são enviadas ao JSONBin utilizando a Master Key, garantindo atualização instantânea no Totem Digital.
+Tecnologia Base: Desenvolvido inteiramente com HTML, CSS (Tailwind CSS) e JavaScript, eliminando a necessidade de linguagens de servidor (PHP, Python, Node.js) e bancos de dados tradicionais.
+Benefícios do LabSystem
+Custo Zero de Hospedagem: Dispensa servidores dedicados ou planos de hospedagem.
+Atualização Instantânea: Sincronização direta entre CMS e Totem via nuvem.
+Escalabilidade Simples: Pode ser replicado para múltiplas lojas com configurações independentes.
+Segurança e Controle: Dados sensíveis protegidos pela Master Key e armazenados apenas no navegador e na nuvem.
+Design Personalizável: Interface moderna e adaptável à identidade visual de cada marca.
+Conclusão
+O LabSystem representa uma nova abordagem para gestão digital de lojas, unindo simplicidade, autonomia e eficiência.
+Com sua estrutura Serverless, oferece uma solução centralizada, leve e de baixo custo para administrar e exibir informações de forma moderna e integrada.
