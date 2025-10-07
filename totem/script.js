@@ -1,473 +1,624 @@
 // ====================================================================
-// Serverless-System | TOTEM - LÓGICA PRINCIPAL (script.js) - V2.2 (COMPLETO)
+// Serverless-System | TOTEM DIGITAL - LÓGICA PRINCIPAL (script.js)
 // ====================================================================
 
-class Totem {
+class TotemManager {
     constructor() {
-        this.BIN_ID = ''; // Será preenchido pelo localStorage ou definido manualmente
-        this.API_URL = 'https://api.jsonbin.io/v3/b/';
-        this.storeData = null;
-        this.cart = [];
-        this.selectedCategory = null;
-        this.isMusicPlaying = false;
-        this.player = null; // Objeto do player do YouTube
+        this.BIN_ID = 'YOUR_PUBLIC_BIN_ID_HERE'; // ⚠️ ATUALIZE COM SEU BIN ID PÚBLICO!
+        this.data = null;
+        this.cart = []; // { id: 'prod-x', name: 'Product Name', price: 10.00, qty: 1 }
+        this.selectedCategory = null; 
+        this.deliveryTax = 0;
+        this.estimatedTime = 0;
+        this.player = null; // YouTube Player Object
     }
 
     // ====================================================================
-    // INICIALIZAÇÃO E DADOS
+    // 1. INICIALIZAÇÃO E CARREGAMENTO DE DADOS
     // ====================================================================
 
     async init() {
-        this.getBinId();
-        
-        if (this.BIN_ID) {
-            await this.fetchStoreData();
+        await this.loadRemoteData();
+        if (this.data) {
+            this.applyTheme();
+            this.renderStoreStatus();
+            this.renderMenu();
+            this.renderCoverageOptions();
+            this.renderPaymentOptions();
+            this.setupEventListeners();
+            this.updateCartUI();
+            this.initYouTubePlayer();
         } else {
-            document.getElementById('loadingIndicator').textContent = 'Erro: BIN ID não configurado. Por favor, configure o CMS primeiro.';
+            document.getElementById('products-container').innerHTML = '<div class="text-center p-10 text-red-600 bg-white rounded-xl shadow-xl">❌ Não foi possível carregar os dados da loja. Verifique o BIN ID.</div>';
+        }
+    }
+
+    async loadRemoteData() {
+        if (!this.BIN_ID || this.BIN_ID === '68e36776ae596e708f07b93a') {
+            console.error('BIN ID não configurado no script.js do Totem.');
             return;
         }
 
-        if (this.storeData) {
-            this.applyCustomization();
-            this.renderContent();
-            this.setupEventListeners();
-            
-            // Inicializa o player do YouTube após a API estar pronta
-            if (typeof YT !== 'undefined' && YT.loaded) {
-                this.initYoutubePlayer();
-            } else {
-                window.onYouTubeIframeAPIReady = () => this.initYoutubePlayer();
-            }
-        }
-    }
-
-    getBinId() {
-        // Tenta buscar o BIN ID do localStorage do CMS, se estiver no mesmo domínio
-        const cmsData = localStorage.getItem('labsystem_store_data');
-        if (cmsData) {
-            try {
-                const data = JSON.parse(cmsData);
-                this.BIN_ID = data.configuracoes.binId;
-            } catch (e) {
-                console.warn("CMS local data is corrupt or not set.");
-            }
-        }
-        
-        // Se o BIN_ID ainda não estiver definido (caso o CMS esteja em outro local), defina manualmente aqui
-        // Exemplo: this.BIN_ID = 'SEU_BIN_ID_MANUAL_AQUI'; 
-    }
-
-    async fetchStoreData() {
-        const url = `${this.API_URL}${this.BIN_ID}/latest`;
-        const loadingIndicator = document.getElementById('loadingIndicator');
+        const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
         
         try {
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                loadingIndicator.textContent = `Erro ${response.status}: Falha ao carregar dados. Verifique o BIN ID no CMS.`;
-                return;
-            }
-            
-            const data = await response.json();
-            this.storeData = data.record;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: { 'X-Master-Key': '$2b$10$....' } // Não precisa de Master Key para LEITURA
+            });
 
-            if (this.storeData.configuracoes.storeStatus === 'closed') {
-                loadingIndicator.classList.add('hidden');
-                document.getElementById('storeClosedAlert').classList.remove('hidden');
-                return;
+            if (response.ok) {
+                const json = await response.json();
+                this.data = json.record;
+                console.log('Dados da Loja carregados:', this.data);
+            } else {
+                console.error(`Erro ao carregar dados do JSONBin: ${response.status}`);
             }
-            
-            loadingIndicator.classList.add('hidden');
-
         } catch (error) {
-            loadingIndicator.textContent = 'Erro de rede ou JSONBin: Não foi possível conectar.';
-            console.error('Fetch Error:', error);
+            console.error('Erro de rede ao carregar JSONBin:', error);
         }
-    }
-
-    // ====================================================================
-    // CUSTOMIZAÇÃO E MÍDIA
-    // ====================================================================
-
-    applyCustomization() {
-        if (!this.storeData || !this.storeData.customizacao || !this.storeData.configuracoes) return;
-
-        const cust = this.storeData.customizacao;
-        const conf = this.storeData.configuracoes;
-        
-        // --- 1. CORES E TEMA ---
-        document.documentElement.style.setProperty('--color-primary', cust.headerFooterColor || '#10B981');
-        document.documentElement.style.setProperty('--color-secondary', cust.titleTextColor || '#FFFFFF');
-        
-        // --- 2. FUNDO ---
-        const body = document.body;
-        if (cust.backgroundImageUrl) {
-            body.style.backgroundImage = `url('${cust.backgroundImageUrl}')`;
-            body.classList.add('bg-image-cover');
-        } else {
-            body.style.backgroundColor = cust.backgroundColor || '#f9f9f9';
-            body.classList.remove('bg-image-cover');
-            body.style.backgroundImage = 'none';
-        }
-        
-        // --- 3. LOGO E NOME DA LOJA ---
-        document.getElementById('storeNameHeader').textContent = conf.storeName || 'LabSystem Store';
-        document.getElementById('pageTitle').textContent = `${conf.storeName || 'LabSystem Store'} - Cardápio Digital`;
-        
-        const logo = document.getElementById('storeLogo');
-        logo.src = cust.logoUrl || 'https://via.placeholder.com/150x50/10B981/ffffff?text=Logo';
     }
     
-    // --- 4. PLAYER DE MÚSICA DO YOUTUBE ---
-    initYoutubePlayer() {
-        const musicUrl = this.storeData.customizacao.musicUrl;
-        if (!musicUrl) {
-            document.getElementById('musicToggleBtn').classList.add('hidden');
-            return;
-        }
+    setupEventListeners() {
+        // Inicializa a navegação da categoria (delegada para o contêiner)
+        document.getElementById('categories-list').addEventListener('click', (e) => {
+            const btn = e.target.closest('.category-btn');
+            if (btn) {
+                this.filterProducts(btn.getAttribute('data-id'));
+            }
+        });
+        
+        // Inicializa o campo de nome no modal
+        document.getElementById('client-name').addEventListener('input', () => this.validateCheckout());
+        
+        // Inicializa o campo de endereço no modal (se entrega estiver ativo)
+        document.getElementById('client-address')?.addEventListener('input', () => this.validateCheckout());
 
-        const videoIdMatch = musicUrl.match(/(?:\?v=|\/embed\/|\/v\/|youtu\.be\/|\/watch\?v=)([^&]+)/);
-        const videoId = videoIdMatch ? videoIdMatch[1] : null;
-
-        if (!videoId) {
-            document.getElementById('musicToggleBtn').classList.add('hidden');
-            return;
-        }
-
-        this.player = new YT.Player('youtube-player', {
-            videoId: videoId,
-            playerVars: {
-                'autoplay': 0, 
-                'controls': 0, 
-                'loop': 1, 
-                'playlist': videoId, // Essencial para loop
-                'modestbranding': 1,
-                'disablekb': 1,
-                'mute': 0, // Inicia desmutado, mas o usuário deve dar o play
-            },
-            events: {
-                'onReady': (event) => {
-                    event.target.setVolume(this.storeData.customizacao.musicVolume || 50);
-                },
-                'onStateChange': (event) => {
-                    // Estado 0 (ended), reinicia se estiver em loop
-                    if (event.data === YT.PlayerState.ENDED) {
-                        event.target.playVideo();
-                    }
-                }
+        // Atualiza a taxa ao trocar a opção de pagamento (dinheiro, pix, etc)
+        document.querySelectorAll('input[name="payment-option"]').forEach(input => {
+             input.addEventListener('change', () => this.validateCheckout());
+        });
+        
+        // Listener para fechar o modal ao clicar fora
+        document.getElementById('checkout-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'checkout-modal') {
+                this.closeCheckoutModal();
             }
         });
     }
 
-    toggleMusic() {
-        if (!this.player) return;
+    // ====================================================================
+    // 2. TEMA E STATUS DA LOJA
+    // ====================================================================
+    
+    applyTheme() {
+        if (!this.data || !this.data.customizacao) return;
+        const c = this.data.customizacao;
+        const root = document.documentElement;
 
-        const btn = document.getElementById('musicToggleBtn');
-
-        if (this.isMusicPlaying) {
-            this.player.pauseVideo();
-            btn.innerHTML = '🔇';
-            this.isMusicPlaying = false;
+        // Aplica cores principais
+        root.style.setProperty('--color-primary', c.headerFooterColor || '#10B981');
+        root.style.setProperty('--color-text', c.titleTextColor || '#FFFFFF');
+        root.style.setProperty('--color-background', c.backgroundColor || '#f9fafb');
+        
+        // Aplica logo
+        const logoEl = document.getElementById('store-logo');
+        if (c.logoUrl) {
+            logoEl.src = c.logoUrl;
+            logoEl.classList.remove('hidden');
+            document.getElementById('store-name-display').classList.add('hidden');
         } else {
-            this.player.playVideo();
-            btn.innerHTML = '🔊';
-            this.isMusicPlaying = true;
+             logoEl.classList.add('hidden');
+             document.getElementById('store-name-display').classList.remove('hidden');
+        }
+        
+        // Aplica imagem de fundo (se houver)
+        if (c.backgroundImageUrl) {
+             document.getElementById('app-container').classList.add('bg-image-cover');
+             document.getElementById('app-container').style.backgroundImage = `url('${c.backgroundImageUrl}')`;
+             root.style.setProperty('--color-background', 'transparent'); // Remove a cor sólida
+        } else {
+             document.getElementById('app-container').classList.remove('bg-image-cover');
         }
     }
 
-    // ====================================================================
-    // RENDERIZAÇÃO DO CONTEÚDO
-    // ====================================================================
+    renderStoreStatus() {
+        const status = this.data.configuracoes.storeStatus;
+        const statusBadge = document.getElementById('store-status-badge');
+        const statusText = document.getElementById('status-text');
+        const closedMessage = document.getElementById('store-closed-message');
 
-    renderContent() {
-        this.renderCategories();
-        this.renderProducts();
-        this.renderCoverageOptions();
+        if (!statusBadge || !statusText) return;
+
+        if (status === 'open') {
+            statusBadge.className = 'bg-green-500 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-md';
+            statusText.textContent = 'LOJA ABERTA';
+            closedMessage?.classList.add('hidden');
+        } else {
+            statusBadge.className = 'bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-md';
+            statusText.textContent = 'FECHADA';
+            closedMessage?.classList.remove('hidden');
+            // Desabilita o botão do carrinho se a loja estiver fechada
+            document.getElementById('cart-button').disabled = true;
+            document.getElementById('cart-button').title = 'Loja Fechada - Não é possível fazer pedidos.';
+        }
+        
+        document.getElementById('store-name-display').textContent = this.data.configuracoes.storeName || 'LabSystem Store';
     }
 
-    renderCategories() {
-        const tabsContainer = document.getElementById('categoryTabs');
-        tabsContainer.innerHTML = '';
+    // ====================================================================
+    // 3. RENDERIZAÇÃO DE CARDÁPIO E PRODUTOS
+    // ====================================================================
+
+    renderMenu() {
+        this.renderCategoriesList();
+        this.filterProducts(this.data.categorias[0]?.id || null);
+    }
+    
+    renderCategoriesList() {
+        const listEl = document.getElementById('categories-list');
+        if (!listEl) return;
         
-        if (!this.storeData.categorias || this.storeData.categorias.length === 0) return;
+        listEl.innerHTML = '';
+        document.getElementById('loading-categories').classList.add('hidden');
 
-        this.storeData.categorias.forEach((cat, index) => {
-            const btn = document.createElement('button');
-            btn.className = `tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-primary transition duration-300`;
-            btn.textContent = cat.name;
-            btn.setAttribute('data-category-id', cat.id);
-            btn.addEventListener('click', () => this.switchCategory(cat.id));
-            tabsContainer.appendChild(btn);
+        // Botão para todos os produtos
+        listEl.innerHTML += this.createCategoryButton(null, 'Todos os Produtos', true); 
 
-            if (index === 0) {
-                this.selectedCategory = cat.id;
-                btn.classList.add('active-tab');
+        this.data.categorias.forEach(cat => {
+            listEl.innerHTML += this.createCategoryButton(cat.id, cat.name);
+        });
+    }
+    
+    createCategoryButton(id, name, isAll = false) {
+        // Adiciona a classe 'active' ao primeiro ou à categoria selecionada
+        const isActive = (id === this.selectedCategory) || (isAll && !this.selectedCategory);
+        const activeClass = isActive 
+            ? 'bg-primary text-primary-contrast shadow-md font-extrabold' 
+            : 'text-gray-700 hover:bg-gray-100 font-medium';
+            
+        return `
+            <button data-id="${id || ''}" class="category-btn w-full text-left p-3 rounded-xl transition ${activeClass}">
+                ${name}
+            </button>
+        `;
+    }
+
+    filterProducts(categoryId) {
+        this.selectedCategory = categoryId;
+        const gridEl = document.getElementById('menu-items-grid');
+        if (!gridEl) return;
+
+        // Atualiza o título da seção
+        const titleEl = document.getElementById('current-category-title');
+        if (categoryId) {
+            const cat = this.data.categorias.find(c => c.id === categoryId);
+            titleEl.textContent = cat ? cat.name : 'Produtos';
+        } else {
+            titleEl.textContent = 'Todos os Produtos';
+        }
+        
+        // Atualiza as classes 'active' dos botões
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('bg-primary', 'text-primary-contrast', 'shadow-md', 'font-extrabold');
+            btn.classList.add('text-gray-700', 'hover:bg-gray-100', 'font-medium');
+            
+            if (btn.getAttribute('data-id') === categoryId || (!categoryId && !btn.getAttribute('data-id'))) {
+                btn.classList.add('bg-primary', 'text-primary-contrast', 'shadow-md', 'font-extrabold');
+                btn.classList.remove('text-gray-700', 'hover:bg-gray-100', 'font-medium');
             }
         });
 
-        // Garantir que a primeira categoria seja selecionada
-        this.renderProducts();
-    }
+        const filteredProducts = categoryId 
+            ? this.data.produtos.filter(p => p.categoryId === categoryId)
+            : this.data.produtos;
 
-    switchCategory(categoryId) {
-        this.selectedCategory = categoryId;
+        gridEl.innerHTML = ''; // Limpa a lista
         
-        // Remove active class de todos e adiciona no selecionado
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
-        document.querySelector(`.tab-btn[data-category-id="${categoryId}"]`).classList.add('active-tab');
-        
-        this.renderProducts();
-    }
-
-    renderProducts() {
-        const grid = document.getElementById('productsGrid');
-        grid.innerHTML = '';
-
-        if (this.storeData.configuracoes.storeStatus === 'closed') return;
-
-        const productsToShow = this.storeData.produtos.filter(p => 
-            p.categoryId === this.selectedCategory && p.stock > 0
-        );
-
-        if (productsToShow.length === 0) {
-            grid.innerHTML = `<div class="col-span-full text-center p-10 text-xl text-gray-500">Nenhum produto disponível nesta categoria.</div>`;
+        if (filteredProducts.length === 0) {
+            gridEl.innerHTML = '<p class="text-gray-500 col-span-full p-8 bg-white rounded-2xl shadow-xl">Nenhum produto nesta categoria.</p>';
             return;
         }
 
-        productsToShow.forEach(prod => {
-            const card = document.createElement('div');
-            card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col transition transform hover:shadow-xl hover:-translate-y-1';
-            
-            card.innerHTML = `
-                <img src="${prod.imageUrl}" alt="${prod.name}" class="h-48 w-full object-cover">
-                <div class="p-4 flex-grow flex flex-col">
-                    <h3 class="text-xl font-bold mb-1">${prod.name}</h3>
-                    <p class="text-gray-600 flex-grow">Estoque: ${prod.stock}</p>
-                    <div class="mt-2 flex justify-between items-center">
-                        <span class="text-2xl font-extrabold text-primary">R$ ${prod.price.toFixed(2).replace('.', ',')}</span>
-                        <button onclick="totem.addToCart('${prod.id}')" class="bg-primary text-secondary px-4 py-2 rounded-full font-semibold hover:opacity-90 transition">
-                            Adicionar
+        filteredProducts.forEach(prod => {
+            // Verifica o estoque
+            const isAvailable = prod.stock > 0;
+            const stockText = isAvailable ? `${prod.stock} em estoque` : 'Esgotado';
+            const buttonClass = isAvailable ? 'bg-primary hover:bg-primary-dark' : 'bg-gray-400 cursor-not-allowed';
+            const buttonText = isAvailable ? 'Adicionar ao Carrinho' : 'Indisponível';
+
+            gridEl.innerHTML += `
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden fade-in border border-gray-100">
+                    ${prod.imageUrl ? `<img src="${prod.imageUrl}" alt="${prod.name}" class="w-full h-48 object-cover">` : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 font-bold">Sem Imagem</div>`}
+                    <div class="p-4">
+                        <h3 class="text-xl font-extrabold text-gray-800">${prod.name}</h3>
+                        <p class="text-3xl font-extrabold text-primary my-2">R$ ${prod.price.toFixed(2).replace('.', ',')}</p>
+                        <p class="text-sm text-gray-500 mb-4">${stockText}</p>
+                        
+                        <button onclick="totemManager.addItemToCart('${prod.id}')" 
+                                ${!isAvailable || this.data.configuracoes.storeStatus !== 'open' ? 'disabled' : ''}
+                                class="w-full text-center text-primary-contrast py-2 rounded-xl transition ${buttonClass} disabled:opacity-50">
+                            ${buttonText}
                         </button>
                     </div>
                 </div>
             `;
-            grid.appendChild(card);
         });
     }
 
     // ====================================================================
-    // LÓGICA DO CARRINHO
+    // 4. LÓGICA DO CARRINHO (CART)
     // ====================================================================
 
-    addToCart(productId) {
-        const product = this.storeData.produtos.find(p => p.id === productId);
-
+    addItemToCart(productId) {
+        if (this.data.configuracoes.storeStatus !== 'open') {
+             this.toast('🔴 Loja fechada. Pedidos não são permitidos.', 'bg-red-500');
+             return;
+        }
+        
+        const product = this.data.produtos.find(p => p.id === productId);
         if (!product || product.stock <= 0) {
-            alert('Produto esgotado!');
+            this.toast('Produto esgotado ou não encontrado!', 'bg-red-500');
             return;
         }
 
-        const existingItem = this.cart.find(item => item.id === productId);
+        const cartItem = this.cart.find(item => item.id === productId);
 
-        if (existingItem) {
-            if (existingItem.quantity < product.stock) {
-                existingItem.quantity++;
+        if (cartItem) {
+            if (cartItem.qty < product.stock) {
+                cartItem.qty += 1;
             } else {
-                alert(`Máximo de ${product.stock} em estoque.`);
-                return;
+                 this.toast('Estoque máximo atingido para este item.', 'bg-yellow-500');
+                 return;
             }
         } else {
             this.cart.push({
-                id: productId,
+                id: product.id,
                 name: product.name,
                 price: product.price,
-                quantity: 1,
-                stock: product.stock 
+                qty: 1
             });
         }
-        
-        this.updateCartCount();
-        this.updateCartSummary();
+
+        this.updateCartUI();
+        this.toast(`"${product.name}" adicionado!`, 'bg-green-500');
     }
 
-    updateCartCount() {
-        const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
-        document.getElementById('cartCount').textContent = totalItems;
+    removeItemFromCart(productId) {
+        const index = this.cart.findIndex(item => item.id === productId);
+        if (index !== -1) {
+            this.cart.splice(index, 1);
+            this.updateCartUI();
+            this.renderCheckoutList(); // Atualiza a lista no modal
+        }
     }
     
-    openCartModal() {
-        document.getElementById('cartModal').classList.remove('hidden');
-        this.renderCartItems();
-        this.updateCartSummary();
-    }
-
-    closeCartModal() {
-        document.getElementById('cartModal').classList.add('hidden');
-    }
-
-    renderCartItems() {
-        const list = document.getElementById('cartItemsList');
-        list.innerHTML = '';
-
-        if (this.cart.length === 0) {
-            list.innerHTML = `<p class="text-center text-gray-500">Seu carrinho está vazio.</p>`;
-            document.getElementById('checkoutBtn').disabled = true;
-            return;
-        }
-
-        document.getElementById('checkoutBtn').disabled = false;
-
-        this.cart.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'flex items-center justify-between border-b pb-2';
-            div.innerHTML = `
-                <div>
-                    <span class="font-semibold">${item.name}</span>
-                    <span class="text-sm text-gray-600 block">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="totem.changeQuantity('${item.id}', -1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full">-</button>
-                    <span class="font-bold">${item.quantity}</span>
-                    <button onclick="totem.changeQuantity('${item.id}', 1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full">+</button>
-                    <button onclick="totem.changeQuantity('${item.id}', 0)" class="text-red-500 hover:text-red-700 ml-2">Remover</button>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-    }
-
-    changeQuantity(itemId, change) {
-        const itemIndex = this.cart.findIndex(item => item.id === itemId);
-        const item = this.cart[itemIndex];
-        const productData = this.storeData.produtos.find(p => p.id === itemId);
-
-        if (!item) return;
-
-        if (change === 0) {
-            // Remover item
-            this.cart.splice(itemIndex, 1);
-        } else if (change === 1) {
-            // Aumentar quantidade (com checagem de estoque)
-            if (item.quantity < productData.stock) {
-                item.quantity++;
-            }
-        } else if (change === -1) {
-            // Diminuir quantidade
-            if (item.quantity > 1) {
-                item.quantity--;
-            } else {
-                this.cart.splice(itemIndex, 1); // Remove se a quantidade for para 0
-            }
-        }
+    changeItemQuantity(productId, change) {
+        const cartItem = this.cart.find(item => item.id === productId);
+        const productData = this.data.produtos.find(p => p.id === productId);
         
-        this.updateCartCount();
-        this.renderCartItems();
-        this.updateCartSummary();
+        if (cartItem && productData) {
+            cartItem.qty += change;
+            
+            if (cartItem.qty <= 0) {
+                this.removeItemFromCart(productId);
+            } else if (cartItem.qty > productData.stock) {
+                cartItem.qty = productData.stock;
+                this.toast('Limite de estoque atingido.', 'bg-yellow-500');
+            }
+            
+            this.updateCartUI();
+            this.renderCheckoutList(); 
+        }
+    }
+
+    updateCartUI() {
+        const totalItems = this.cart.reduce((sum, item) => sum + item.qty, 0);
+        const total = this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        
+        document.getElementById('cart-item-count').textContent = totalItems;
+        document.getElementById('cart-total-display').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        
+        // Desabilita o botão se o carrinho estiver vazio
+        document.getElementById('cart-button').disabled = totalItems === 0 || this.data.configuracoes.storeStatus !== 'open';
+    }
+
+    // ====================================================================
+    // 5. CHECKOUT E PEDIDO WHATSAPP
+    // ====================================================================
+
+    openCheckoutModal() {
+        if (this.cart.length === 0) return;
+        this.renderCheckoutList();
+        this.updateDeliveryDetails(); // Calcula total inicial
+        document.getElementById('checkout-modal').classList.remove('hidden');
+        this.validateCheckout();
+    }
+
+    closeCheckoutModal() {
+        document.getElementById('checkout-modal').classList.add('hidden');
+    }
+    
+    renderCheckoutList() {
+        const listEl = document.getElementById('checkout-list');
+        if (!listEl) return;
+        
+        listEl.innerHTML = this.cart.map(item => `
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl shadow-sm">
+                <div class="flex-1">
+                    <p class="font-bold text-gray-800">${item.name}</p>
+                    <p class="text-sm text-gray-600">R$ ${item.price.toFixed(2).replace('.', ',')} (Un.)</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="totemManager.changeItemQuantity('${item.id}', -1)" class="text-primary hover:opacity-70 font-bold text-xl px-2">-</button>
+                    <span class="font-bold text-gray-800">${item.qty}</span>
+                    <button onclick="totemManager.changeItemQuantity('${item.id}', 1)" class="text-primary hover:opacity-70 font-bold text-xl px-2">+</button>
+                </div>
+            </div>
+        `).join('');
     }
 
     renderCoverageOptions() {
-        const select = document.getElementById('deliveryArea');
-        if (!select) return;
-
-        // Limpa opções, mantendo "Retirar na Loja"
-        select.querySelectorAll('option:not([value=""])').forEach(opt => opt.remove());
-
-        if (!this.storeData.cobertura || this.storeData.cobertura.length === 0) return;
-
-        this.storeData.cobertura.forEach(area => {
+        const selectEl = document.getElementById('client-area');
+        if (!selectEl) return;
+        
+        // Mantém a primeira opção de placeholder
+        const placeholder = selectEl.querySelector('option[value=""]');
+        selectEl.innerHTML = '';
+        selectEl.appendChild(placeholder);
+        
+        this.data.cobertura.forEach(area => {
             const option = document.createElement('option');
             option.value = area.id;
-            option.textContent = `${area.name} (R$ ${area.taxa.toFixed(2).replace('.', ',')} - ${area.tempo} min)`;
-            option.setAttribute('data-taxa', area.taxa);
-            option.setAttribute('data-tempo', area.tempo);
-            select.appendChild(option);
+            option.textContent = `${area.name} (R$ ${area.taxa.toFixed(2).replace('.', ',')} / ${area.tempo} min)`;
+            selectEl.appendChild(option);
         });
     }
 
-    updateCartSummary() {
-        let subtotal = 0;
-        this.cart.forEach(item => {
-            subtotal += item.price * item.quantity;
-        });
-
-        const deliverySelect = document.getElementById('deliveryArea');
-        const selectedOption = deliverySelect.options[deliverySelect.selectedIndex];
+    renderPaymentOptions() {
+        const optionsEl = document.getElementById('payment-options');
+        if (!optionsEl) return;
         
-        const deliveryTax = selectedOption.value ? parseFloat(selectedOption.getAttribute('data-taxa')) : 0;
-        const total = subtotal + deliveryTax;
+        optionsEl.innerHTML = '';
+        
+        // Opção Padrão: Dinheiro (Troco)
+        optionsEl.innerHTML += `
+            <label class="block p-3 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200">
+                <input type="radio" name="payment-option" value="Dinheiro" checked class="form-radio text-primary" onchange="totemManager.validateCheckout()">
+                <span class="ml-2 font-medium text-gray-800">💵 Dinheiro (Troco para...)</span>
+                <input type="number" id="cash-change" class="mt-2 block w-full border rounded-xl p-2 shadow-sm" placeholder="Precisa de troco para quanto? (Ex: 50)">
+            </label>
+        `;
+        
+        // Opção PIX
+        if (this.data.pagamento.pixKey) {
+            optionsEl.innerHTML += `
+                <label class="block p-3 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200">
+                    <input type="radio" name="payment-option" value="PIX" class="form-radio text-primary" onchange="totemManager.validateCheckout()">
+                    <span class="ml-2 font-medium text-gray-800">🔑 PIX (Chave: ${this.data.pagamento.pixKey})</span>
+                </label>
+            `;
+        }
 
-        document.getElementById('subtotal').textContent = subtotal.toFixed(2).replace('.', ',');
-        document.getElementById('deliveryTax').textContent = deliveryTax.toFixed(2).replace('.', ',');
-        document.getElementById('total').textContent = total.toFixed(2).replace('.', ',');
+        // Outros detalhes (Bancário ou Bitcoin)
+         if (this.data.pagamento.bankDetails || this.data.pagamento.bitcoinLightning) {
+            optionsEl.innerHTML += `
+                <label class="block p-3 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200">
+                    <input type="radio" name="payment-option" value="Outras Formas" class="form-radio text-primary" onchange="totemManager.validateCheckout()">
+                    <span class="ml-2 font-medium text-gray-800">💳 Outras Formas (A combinar)</span>
+                </label>
+            `;
+        }
     }
 
-    checkout() {
-        if (this.cart.length === 0) return;
-
-        const deliverySelect = document.getElementById('deliveryArea');
-        const selectedOption = deliverySelect.options[deliverySelect.selectedIndex];
-        const areaName = selectedOption.value ? selectedOption.textContent.split('(')[0].trim() : 'Retirar na Loja';
-        const deliveryTime = selectedOption.value ? selectedOption.getAttribute('data-tempo') : '0';
-        const deliveryTax = selectedOption.value ? parseFloat(selectedOption.getAttribute('data-taxa')) : 0;
-
-        let total = 0;
-        let orderDetails = "🛒 *NOVO PEDIDO (LabSystem)* 🛒\n\n";
+    updateDeliveryDetails() {
+        const deliveryContainer = document.getElementById('delivery-details-container');
+        const isDelivery = document.querySelector('input[name="delivery-option"]:checked')?.value === 'Entrega';
+        const finalTotalDisplay = document.getElementById('final-total-display');
+        const baseTotal = this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         
-        // --- Lista de Produtos ---
-        orderDetails += "--- ITENS DO PEDIDO ---\n";
-        this.cart.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            orderDetails += `*${item.quantity}x ${item.name}* (R$ ${item.price.toFixed(2).replace('.', ',')}) = R$ ${itemTotal.toFixed(2).replace('.', ',')}\n`;
-        });
-        
-        // --- Resumo e Entrega ---
-        orderDetails += "\n--- RESUMO ---\n";
-        orderDetails += `Subtotal: R$ ${total.toFixed(2).replace('.', ',')}\n`;
-        orderDetails += `Entrega (${areaName}): R$ ${deliveryTax.toFixed(2).replace('.', ',')}\n`;
-        orderDetails += `*TOTAL GERAL:* R$ ${(total + deliveryTax).toFixed(2).replace('.', ',')}\n\n`;
+        deliveryContainer.classList.toggle('hidden', !isDelivery);
+        document.getElementById('client-address').required = isDelivery;
+        document.getElementById('client-area').required = isDelivery;
 
-        // --- Tempo de Entrega ---
-        if (deliveryTime > 0) {
-            orderDetails += `Estimativa de Entrega: ${deliveryTime} minutos.\n\n`;
+        this.deliveryTax = 0;
+        this.estimatedTime = 0;
+        
+        if (isDelivery) {
+            const selectedAreaId = document.getElementById('client-area').value;
+            if (selectedAreaId) {
+                const area = this.data.cobertura.find(a => a.id === selectedAreaId);
+                if (area) {
+                    this.deliveryTax = area.taxa;
+                    this.estimatedTime = area.tempo;
+                }
+            }
+        }
+        
+        const finalTotal = baseTotal + this.deliveryTax;
+        finalTotalDisplay.textContent = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+
+        const taxDisplay = document.getElementById('delivery-tax-display');
+        if (this.deliveryTax > 0) {
+            taxDisplay.textContent = `Taxa de Entrega: R$ ${this.deliveryTax.toFixed(2).replace('.', ',')} (Tempo: ${this.estimatedTime} min)`;
+        } else if (isDelivery) {
+            taxDisplay.textContent = 'Selecione uma área para calcular a taxa.';
         } else {
-            orderDetails += `Estimativa de Retirada: 15-20 minutos após a confirmação.\n\n`;
+            taxDisplay.textContent = 'Retirada no Local (sem taxa)';
         }
-
-        // --- Dados de Pagamento ---
-        const pag = this.storeData.pagamento;
-        orderDetails += "--- DETALHES DE PAGAMENTO ---\n";
-        orderDetails += `PIX: ${pag.pixKey || 'Não informado'}\n`;
         
-        if (pag.bankDetails) {
-            orderDetails += `Transferência:\n${pag.bankDetails}\n`;
-        }
-        if (pag.bitcoinLightning) {
-            orderDetails += `Lightning (BTC): ${pag.bitcoinLightning}\n`;
-        }
-
-        orderDetails += "\n*Por favor, envie o comprovante de pagamento junto com o seu ENDEREÇO COMPLETO, NOME e TELEFONE para finalizar o pedido.*";
-        
-        const whatsappNumber = this.storeData.configuracoes.whatsapp || '5511999998888';
-        const encodedMessage = encodeURIComponent(orderDetails);
-        const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-        
-        window.open(whatsappLink, '_blank');
-        this.closeCartModal();
-        
-        // Opcional: Limpar o carrinho após o checkout
-        // this.cart = [];
-        // this.updateCartCount();
+        this.validateCheckout();
     }
     
-    setupEventListeners() {
-        // Nada extra por enquanto
+    validateCheckout() {
+        const btn = document.getElementById('finish-order-btn');
+        if (!btn) return;
+
+        const isDelivery = document.querySelector('input[name="delivery-option"]:checked')?.value === 'Entrega';
+        const clientName = document.getElementById('client-name').value.trim();
+        const clientAddress = document.getElementById('client-address').value.trim();
+        const clientArea = document.getElementById('client-area').value;
+        const total = this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0) + this.deliveryTax;
+        
+        let isValid = true;
+        
+        if (!clientName) isValid = false;
+        
+        if (isDelivery) {
+            if (!clientAddress || !clientArea || this.deliveryTax === 0) {
+                 isValid = false;
+            }
+        }
+        
+        btn.disabled = !isValid || total === 0;
+        
+        if (isValid && total > 0) {
+             btn.title = 'Finalizar Pedido';
+        } else if (total === 0) {
+             btn.title = 'Carrinho vazio';
+        } else {
+             btn.title = 'Preencha todos os campos obrigatórios e selecione uma área de entrega.';
+        }
+    }
+
+    generateWhatsAppLink() {
+        if (this.cart.length === 0) return;
+        this.validateCheckout();
+        if (document.getElementById('finish-order-btn').disabled) return;
+
+        const isDelivery = document.querySelector('input[name="delivery-option"]:checked')?.value === 'Entrega';
+        const deliveryOption = document.querySelector('input[name="delivery-option"]:checked')?.value;
+        const paymentOption = document.querySelector('input[name="payment-option"]:checked')?.value;
+        const clientName = document.getElementById('client-name').value.trim();
+        const clientAddress = document.getElementById('client-address').value.trim();
+        const selectedArea = document.getElementById('client-area').value;
+        const baseTotal = this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const finalTotal = baseTotal + this.deliveryTax;
+        
+        let message = `*Olá, ${this.data.configuracoes.storeName}! Novo Pedido LabSystem* %0A%0A`;
+        message += `*Cliente:* ${clientName}%0A`;
+        message += `*Opção:* ${deliveryOption}%0A`;
+        
+        if (isDelivery) {
+            const areaName = this.data.cobertura.find(a => a.id === selectedArea)?.name || 'Área não identificada';
+            message += `*Endereço:* ${clientAddress} (${areaName})%0A`;
+            message += `*Tempo Estimado:* ${this.estimatedTime} minutos%0A`;
+        } else {
+            message += `*Local de Retirada:* ${this.data.configuracoes.address}%0A`;
+        }
+        
+        message += `%0A*--- ITENS ---*%0A`;
+        
+        this.cart.forEach(item => {
+            message += `👉 ${item.qty}x ${item.name} (R$ ${item.price.toFixed(2).replace('.', ',')})%0A`;
+        });
+        
+        message += `%0A*--- VALORES ---*%0A`;
+        message += `Subtotal: R$ ${baseTotal.toFixed(2).replace('.', ',')}%0A`;
+        if (this.deliveryTax > 0) {
+            message += `Taxa de Entrega: R$ ${this.deliveryTax.toFixed(2).replace('.', ',')}%0A`;
+        }
+        message += `*Total do Pedido: R$ ${finalTotal.toFixed(2).replace('.', ',')}*%0A`;
+        
+        message += `%0A*--- PAGAMENTO ---*%0A`;
+        message += `Forma: ${paymentOption}%0A`;
+        
+        if (paymentOption === 'Dinheiro') {
+            const change = document.getElementById('cash-change').value.trim();
+            message += `Troco para: ${change ? 'R$ ' + change : 'Exato'}%0A`;
+        } else if (paymentOption === 'PIX') {
+            message += `Chave PIX: ${this.data.pagamento.pixKey}%0A`;
+        } else if (paymentOption === 'Outras Formas') {
+             message += `Detalhes: ${this.data.pagamento.bankDetails ? this.data.pagamento.bankDetails : 'A combinar com a loja'}`
+        }
+
+        // URL Final
+        const whatsappNumber = this.data.configuracoes.whatsapp;
+        const finalUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+        
+        window.open(finalUrl, '_blank');
+        this.closeCheckoutModal();
+        this.toast('Pedido enviado! Aguarde a confirmação da loja.', 'bg-indigo-600');
+        
+        // Limpa o carrinho após o pedido
+        this.cart = [];
+        this.updateCartUI();
+        this.filterProducts(this.selectedCategory); // Refresca a lista
+    }
+
+    // ====================================================================
+    // 6. MÚSICA DE FUNDO (YOUTUBE API)
+    // ====================================================================
+
+    initYouTubePlayer() {
+        if (!this.data.customizacao.musicUrl) return;
+        
+        // Esta função global é chamada pelo script do YouTube API
+        window.onYouTubeIframeAPIReady = () => {
+            const videoId = this.getYouTubeVideoId(this.data.customizacao.musicUrl);
+            if (!videoId) return;
+
+            this.player = new YT.Player('youtube-player', {
+                videoId: videoId,
+                playerVars: {
+                    'autoplay': 1,  // Tenta iniciar automaticamente
+                    'controls': 0,  // Remove controles
+                    'loop': 1,      // Habilita o loop (será forçado no evento)
+                    'playlist': videoId, // Necessário para 'loop' funcionar
+                    'disablekb': 1,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': (event) => {
+                        // Define o volume e tenta tocar
+                        event.target.setVolume(this.data.customizacao.musicVolume || 50);
+                        event.target.playVideo();
+                    },
+                    'onStateChange': (event) => {
+                        // Garante que o vídeo seja reiniciado (loop manual)
+                        if (event.data === YT.PlayerState.ENDED) {
+                            event.target.playVideo();
+                        }
+                    }
+                }
+            });
+        };
+    }
+    
+    getYouTubeVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // ====================================================================
+    // 7. UTILIDADES
+    // ====================================================================
+
+    toast(message, className = 'bg-gray-800') {
+        const toastEl = document.createElement('div');
+        toastEl.className = `fixed bottom-4 left-1/2 -translate-x-1/2 text-white p-3 rounded-xl shadow-xl ${className} z-50 transition-opacity duration-300`;
+        toastEl.textContent = message;
+        document.body.appendChild(toastEl);
+        
+        setTimeout(() => {
+            toastEl.style.opacity = 0;
+            setTimeout(() => toastEl.remove(), 300);
+        }, 3000);
     }
 }
 
-// Inicializa a classe Totem
+// ====================================================================
+// INICIALIZAÇÃO
+// ====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    window.totem = new Totem();
-    window.totem.init(); 
+    window.totemManager = new TotemManager();
+    // Verifica se o YouTube API já carregou (pode acontecer antes do DOMContentLoaded)
+    if (typeof YT !== 'undefined' && YT.loaded) {
+        window.totemManager.init();
+    } else {
+        // Inicializa o manager após o carregamento do DOM
+        window.totemManager.init();
+    }
 });
