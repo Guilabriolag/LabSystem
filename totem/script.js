@@ -22,6 +22,7 @@ class TotemManager {
     async init() {
         await this.loadRemoteData();
         if (this.data) {
+            // Se os dados carregaram, inicie todas as renderizações
             this.applyTheme();
             this.renderStoreStatus();
             this.renderMenu();
@@ -31,19 +32,19 @@ class TotemManager {
             this.updateCartUI();
             this.initYouTubePlayer();
         } else {
-            // Este erro só será exibido se a busca falhar (JSONBin fora do ar, Bin privado ou ID realmente errado)
+            // Este erro só será exibido se a busca falhar totalmente (JSONBin inacessível, etc.)
             document.getElementById('products-container').innerHTML = '<div class="text-center p-10 text-red-600 bg-white rounded-xl shadow-xl">❌ Não foi possível carregar os dados da loja. Verifique o BIN ID, se o Bin está PÚBLICO e se os dados foram publicados.</div>';
         }
     }
 
     async loadRemoteData() {
-        // A url agora é construída usando o this.BIN_ID
+        // A url é construída usando o this.BIN_ID
         const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
         
         try {
             const response = await fetch(url, {
                 method: 'GET',
-                // Não precisa de Master Key para LEITURA (acesso a Bin Público)
+                // Para leitura de um BIN PÚBLICO, o Master Key deve ser omitido ou vazio
                 headers: { 'X-Master-Key': '' } 
             });
 
@@ -123,6 +124,8 @@ class TotemManager {
     }
 
     renderStoreStatus() {
+        if (!this.data || !this.data.configuracoes) return;
+        
         const status = this.data.configuracoes.storeStatus;
         const statusBadge = document.getElementById('store-status-badge');
         const statusText = document.getElementById('status-text');
@@ -151,7 +154,10 @@ class TotemManager {
     // ====================================================================
 
     renderMenu() {
+        if (!this.data || !this.data.categorias || !this.data.produtos) return;
+        
         this.renderCategoriesList();
+        // Tenta carregar a primeira categoria ou todos os produtos se a lista não estiver vazia
         this.filterProducts(this.data.categorias[0]?.id || null);
     }
     
@@ -162,12 +168,18 @@ class TotemManager {
         listEl.innerHTML = '';
         document.getElementById('loading-categories').classList.add('hidden');
 
-        // Botão para todos os produtos
-        listEl.innerHTML += this.createCategoryButton(null, 'Todos os Produtos', true); 
+        // Botão para todos os produtos (só se houver produtos)
+        if (this.data.produtos.length > 0) {
+            listEl.innerHTML += this.createCategoryButton(null, 'Todos os Produtos', true); 
+        }
 
         this.data.categorias.forEach(cat => {
             listEl.innerHTML += this.createCategoryButton(cat.id, cat.name);
         });
+
+        if (this.data.produtos.length === 0) {
+             listEl.innerHTML = '<p class="text-gray-500 text-sm p-2">Adicione produtos no CMS para ver o cardápio.</p>';
+        }
     }
     
     createCategoryButton(id, name, isAll = false) {
@@ -216,7 +228,7 @@ class TotemManager {
         gridEl.innerHTML = ''; // Limpa a lista
         
         if (filteredProducts.length === 0) {
-            gridEl.innerHTML = '<p class="text-gray-500 col-span-full p-8 bg-white rounded-2xl shadow-xl">Nenhum produto nesta categoria.</p>';
+            gridEl.innerHTML = '<p class="text-gray-500 col-span-full p-8 bg-white rounded-2xl shadow-xl">Nenhum produto nesta categoria. Por favor, adicione itens no Painel CMS.</p>';
             return;
         }
 
@@ -251,7 +263,7 @@ class TotemManager {
     // ====================================================================
 
     addItemToCart(productId) {
-        if (this.data.configuracoes.storeStatus !== 'open') {
+        if (!this.data || this.data.configuracoes.storeStatus !== 'open') {
              this.toast('🔴 Loja fechada. Pedidos não são permitidos.', 'bg-red-500');
              return;
         }
@@ -320,7 +332,7 @@ class TotemManager {
         document.getElementById('cart-total-display').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
         
         // Desabilita o botão se o carrinho estiver vazio
-        document.getElementById('cart-button').disabled = totalItems === 0 || this.data.configuracoes.storeStatus !== 'open';
+        document.getElementById('cart-button').disabled = totalItems === 0 || (this.data && this.data.configuracoes.storeStatus !== 'open');
     }
 
     // ====================================================================
@@ -419,6 +431,8 @@ class TotemManager {
     }
 
     updateDeliveryDetails() {
+        if (!this.data) return;
+        
         const deliveryContainer = document.getElementById('delivery-details-container');
         const isDelivery = document.querySelector('input[name="delivery-option"]:checked')?.value === 'Entrega';
         const finalTotalDisplay = document.getElementById('final-total-display');
@@ -489,7 +503,7 @@ class TotemManager {
     }
 
     generateWhatsAppLink() {
-        if (this.cart.length === 0) return;
+        if (this.cart.length === 0 || !this.data) return;
         this.validateCheckout();
         if (document.getElementById('finish-order-btn').disabled) return;
 
