@@ -44,7 +44,7 @@ class TotemManager {
         try {
             const response = await fetch(url, {
                 method: 'GET',
-                headers: { 'X-Master-Key': '$2b$10$....' } // Não precisa de Master Key para LEITURA
+                headers: { 'X-Master-Key': '' } // Não precisa de Master Key para LEITURA
             });
 
             if (response.ok) {
