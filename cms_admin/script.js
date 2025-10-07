@@ -1,5 +1,5 @@
 // ====================================================================
-// Serverless-System | CMS ADMIN - LÓGICA PRINCIPAL (script.js) - V2.2 (CORRIGIDO)
+// Serverless-System | CMS ADMIN - LÓGICA PRINCIPAL (script.js) - V4.0 (UI/UX AVANÇADO)
 // ====================================================================
 
 /**
@@ -10,7 +10,7 @@ const defaultData = {
     configuracoes: {
         binId: '', 
         masterKey: '', 
-        storeStatus: 'open', // open | closed
+        storeStatus: 'closed', // open | closed
         whatsapp: '5511999998888',
         lowStockThreshold: 5,
         storeName: 'LabSystem Store', 
@@ -69,25 +69,64 @@ class StoreManager {
         this.renderCoverage(); 
         this.checkLowStockAlerts(); 
         this.setupEventListeners(); 
+        this.renderDashboardStats(); // NOVO: Renderiza os cards do dashboard
         this.switchTab('publicar'); 
+        this.applyDesktopLayout(); 
+    }
+    
+    // ====================================================================
+    // MÉTODOS DE CONTROLE DA SIDEBAR E LAYOUT
+    // ====================================================================
+    
+    applyDesktopLayout() {
+        const content = document.getElementById('contentContainer');
+        if (window.innerWidth >= 1024) {
+            content.style.marginLeft = '280px';
+        } else {
+            content.style.marginLeft = '0';
+        }
     }
 
+    openMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        sidebar.classList.add('open');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.style.opacity = '0.5', 10);
+    }
+
+    closeMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        sidebar.classList.remove('open');
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+
+
     // ====================================================================
-    // EVENT LISTENERS (CRÍTICO PARA FUNCIONALIDADE)
+    // EVENT LISTENERS 
     // ====================================================================
 
     setupEventListeners() {
         // --- BOTÕES GERAIS ---
         document.getElementById('saveBtn')?.addEventListener('click', () => this.saveLocalData());
         document.getElementById('publishBtn')?.addEventListener('click', () => this.publishData());
-        document.getElementById('exportDataBtn')?.addEventListener('click', () => this.exportData());
-        document.getElementById('importDataBtn')?.addEventListener('click', () => this.triggerImport());
         
-        // --- ABAS DE NAVEGAÇÃO ---
+        document.querySelector('button[onclick="storeManager.exportData()"]')?.addEventListener('click', () => this.exportData());
+        document.querySelector('button[onclick="storeManager.triggerImport()"]')?.addEventListener('click', () => this.triggerImport());
+
+        
+        // --- SIDEBAR E ABAS DE NAVEGAÇÃO ---
+        document.getElementById('sidebarToggle')?.addEventListener('click', () => this.openMobileSidebar());
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.switchTab(e.currentTarget.getAttribute('data-tab'));
+                if (window.innerWidth < 1024) {
+                    this.closeMobileSidebar();
+                }
             });
         });
         
@@ -101,9 +140,6 @@ class StoreManager {
             e.preventDefault();
             this.saveProduct();
         });
-        
-        // --- CAMPO DE CATEGORIA (BOTÃO DE AÇÃO) ---
-        document.getElementById('addCategoryBtn')?.addEventListener('click', () => this.addCategory());
         
         // --- LISTENERS DE VALORES (PARA SYNC E UI) ---
         const musicVolumeInput = document.getElementById('musicVolume');
@@ -130,34 +166,68 @@ class StoreManager {
                 this.saveLocalData();
             });
         });
+        
+        window.addEventListener('resize', () => this.applyDesktopLayout());
     }
 
     // ====================================================================
-    // MÉTODOS DE TROCA DE ABA
+    // MÉTODOS DE TROCA DE ABA (AJUSTADO PARA NOVAS CLASSES)
     // ====================================================================
 
     switchTab(tabName) {
         document.querySelectorAll('.tab-section').forEach(section => {
             section.classList.add('hidden');
         });
+        
+        // Remove a classe ativa de TODOS os botões da sidebar
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'font-bold', 'text-indigo-600'); 
-            btn.classList.add('text-gray-500');
+            btn.classList.remove('sidebar-active', 'bg-indigo-50', 'text-indigo-700'); 
+            btn.classList.add('text-gray-700', 'hover:bg-indigo-50', 'hover:text-indigo-700');
         });
 
         const targetSection = document.getElementById(`tab-${tabName}`);
         if (targetSection) {
             targetSection.classList.remove('hidden');
         }
+        
+        // Adiciona a classe ativa ao botão selecionado na sidebar
         const targetButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
         if (targetButton) {
-            targetButton.classList.add('active-tab', 'font-bold', 'text-indigo-600');
-            targetButton.classList.remove('text-gray-500');
+            targetButton.classList.add('sidebar-active');
+            targetButton.classList.remove('text-gray-700', 'hover:bg-indigo-50', 'hover:text-indigo-700');
+        }
+        
+        // Garante que o dashboard seja atualizado ao trocar de aba
+        if(tabName === 'publicar') {
+            this.renderDashboardStats();
+        }
+    }
+    
+    // NOVO: Renderiza os cards da primeira aba
+    renderDashboardStats() {
+        const storeStatus = this.data.configuracoes.storeStatus;
+        const statusEl = document.getElementById('statusDisplay');
+        const productCountEl = document.getElementById('productCountDisplay');
+        const coverageCountEl = document.getElementById('coverageCountDisplay');
+        
+        if (statusEl) {
+            statusEl.textContent = storeStatus === 'open' ? 'ABERTA' : 'FECHADA';
+            statusEl.classList.toggle('text-green-600', storeStatus === 'open');
+            statusEl.classList.toggle('text-red-600', storeStatus === 'closed');
+        }
+        
+        if (productCountEl) {
+            productCountEl.textContent = this.data.produtos.length;
+        }
+        
+        if (coverageCountEl) {
+            coverageCountEl.textContent = this.data.cobertura.length;
         }
     }
 
     // ====================================================================
     // MÉTODOS DE PERSISTÊNCIA LOCAL (LOCAL STORAGE)
+    // (Mantidos do V3.0)
     // ====================================================================
 
     loadLocalData() {
@@ -186,7 +256,8 @@ class StoreManager {
             this.collectDataFromForms(); 
             localStorage.setItem(this.dataKey, JSON.stringify(this.data));
             this.checkLowStockAlerts();
-            this.toast('✅ Dados salvos localmente!', 'bg-indigo-500');
+            this.renderDashboardStats(); // Atualiza dashboard após salvar
+            this.toast('✅ Dados salvos localmente!', 'bg-indigo-600');
         } catch (e) {
             this.toast('❌ Erro ao salvar dados localmente.', 'bg-red-500');
             console.error('Erro ao salvar no LocalStorage:', e);
@@ -195,7 +266,7 @@ class StoreManager {
     
     // ====================================================================
     // MÉTODOS DE COLETA E RENDERIZAÇÃO DE FORMULÁRIOS
-    // (Implementação completa)
+    // (Mantidos do V3.0)
     // ====================================================================
     
     collectDataFromForms() {
@@ -255,7 +326,7 @@ class StoreManager {
 
         if (document.getElementById('headerFooterColor')) {
             document.getElementById('headerFooterColor').value = d.customizacao.headerFooterColor || '#000000';
-            document.getElementById('headerFooterColorText').value = d.customizacao.headerFooterColor || '#000000'; // Sincroniza o texto
+            document.getElementById('headerFooterColorText').value = d.customizacao.headerFooterColor || '#000000'; 
             
             document.getElementById('titleTextColor').value = d.customizacao.titleTextColor || '#FFFFFF';
             document.getElementById('titleTextColorText').value = d.customizacao.titleTextColor || '#FFFFFF'; 
@@ -266,13 +337,16 @@ class StoreManager {
             document.getElementById('backgroundImageUrl').value = d.customizacao.backgroundImageUrl || '';
             document.getElementById('logoUrl').value = d.customizacao.logoUrl || '';
             document.getElementById('musicUrl').value = d.customizacao.musicUrl || '';
+            
             document.getElementById('musicVolume').value = d.customizacao.musicVolume || 50;
-            document.getElementById('musicVolumeValue').textContent = d.customizacao.musicVolume || 50;
+            const volumeValueEl = document.getElementById('musicVolumeValue');
+            if (volumeValueEl) volumeValueEl.textContent = d.customizacao.musicVolume || 50;
         }
     }
     
     // ====================================================================
-    // MÉTODOS CRUD: COBERTURA DE ENTREGA (CORRIGIDO)
+    // MÉTODOS CRUD: COBERTURA DE ENTREGA 
+    // (Mantidos do V3.0)
     // ====================================================================
     renderCoverage() {
         const tableBody = document.getElementById('coverageTableBody');
@@ -281,13 +355,14 @@ class StoreManager {
         tableBody.innerHTML = '';
         this.data.cobertura.forEach(area => {
             const row = tableBody.insertRow();
+            row.className = 'hover:bg-gray-50'; // Added hover effect
             row.innerHTML = `
                 <td class="py-2 px-4 border-b">${area.name}</td>
                 <td class="py-2 px-4 border-b">R$ ${area.taxa.toFixed(2).replace('.', ',')}</td>
                 <td class="py-2 px-4 border-b">${area.tempo} min</td>
                 <td class="py-2 px-4 border-b text-center space-x-2">
-                    <button type="button" onclick="storeManager.editCoverage('${area.id}')" class="text-blue-500 hover:text-blue-700">Editar</button>
-                    <button type="button" onclick="storeManager.deleteCoverage('${area.id}')" class="text-red-500 hover:text-red-700">Excluir</button>
+                    <button type="button" onclick="storeManager.editCoverage('${area.id}')" class="text-blue-500 hover:text-blue-700 font-medium">Editar</button>
+                    <button type="button" onclick="storeManager.deleteCoverage('${area.id}')" class="text-red-500 hover:text-red-700 font-medium">Excluir</button>
                 </td>
             `;
         });
@@ -366,7 +441,8 @@ class StoreManager {
     }
     
     // ====================================================================
-    // MÉTODOS DE SINCRONIZAÇÃO E BACKUP (CORRIGIDO)
+    // MÉTODOS DE SINCRONIZAÇÃO E BACKUP
+    // (Mantidos do V3.0)
     // ====================================================================
 
     async publishData() {
@@ -379,7 +455,6 @@ class StoreManager {
             return;
         }
 
-        // Salva localmente antes de publicar para garantir que os dados de formulário foram coletados
         this.saveLocalData(); 
 
         const url = `https://api.jsonbin.io/v3/b/${binId}`;
@@ -429,13 +504,11 @@ class StoreManager {
         input.style.display = 'none';
         input.addEventListener('change', (e) => this.importData(e));
         
-        // Adiciona um ID para que o botão possa ser acessado, caso necessário
         input.id = 'importFileInput'; 
         
         document.body.appendChild(input);
         input.click();
         
-        // Remove o input após o clique (ou após um pequeno delay)
         setTimeout(() => {
             document.body.removeChild(input);
         }, 100); 
@@ -449,7 +522,6 @@ class StoreManager {
         reader.onload = (e) => {
             try {
                 const importedData = JSON.parse(e.target.result);
-                // Verificação mínima para garantir que não é um arquivo qualquer
                 if (importedData && importedData.configuracoes && importedData.produtos) {
                     if (confirm('Importar? Isso substituirá TODOS os dados atuais do CMS local. Tem certeza?')) {
                         this.data = importedData;
@@ -470,12 +542,14 @@ class StoreManager {
     }
 
     // ====================================================================
-    // MÉTODOS CRUD: ITENS E CATEGORIAS (CORRIGIDO)
+    // MÉTODOS CRUD: ITENS E CATEGORIAS
+    // (Mantidos do V3.0)
     // ====================================================================
 
     renderItemManagement() {
         this.renderCategoriesList();
         this.renderProductsTable();
+        this.renderProductModalCategories(); // Garante que o modal tenha as categorias
     }
     
     renderCategoriesList() {
@@ -485,10 +559,10 @@ class StoreManager {
         list.innerHTML = '';
         this.data.categorias.forEach(cat => {
             const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-2 bg-white rounded-md border';
+            div.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-200 shadow-sm hover:bg-gray-100 transition'; // Novo estilo
             div.innerHTML = `
-                <span>${cat.name}</span>
-                <button type="button" onclick="storeManager.deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700 transition">Excluir</button>
+                <span class="font-medium text-gray-700">${cat.name}</span>
+                <button type="button" onclick="storeManager.deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700 transition p-1 rounded-md">Excluir</button>
             `;
             list.appendChild(div);
         });
@@ -508,7 +582,6 @@ class StoreManager {
             return;
         }
 
-        // Verifica se a categoria já existe
         if (this.data.categorias.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
              this.toast('Esta categoria já existe.', 'bg-yellow-500');
              return;
@@ -516,9 +589,9 @@ class StoreManager {
 
         const newId = 'cat-' + Date.now();
         this.data.categorias.push({ id: newId, name: name });
-        nameInput.value = ''; // Limpa o campo
+        nameInput.value = ''; 
         this.saveLocalData();
-        this.renderItemManagement(); // Atualiza a lista de categorias e produtos
+        this.renderItemManagement(); 
         this.toast('Categoria adicionada!', 'bg-green-500');
     }
 
@@ -527,7 +600,6 @@ class StoreManager {
         
         this.data.categorias = this.data.categorias.filter(cat => cat.id !== categoryId);
         
-        // Remove o categoryId dos produtos afetados
         this.data.produtos = this.data.produtos.map(prod => {
             if (prod.categoryId === categoryId) {
                 prod.categoryId = null; 
@@ -541,7 +613,6 @@ class StoreManager {
     }
     
     renderProductsTable() {
-        // [Função para renderizar a tabela de produtos - Mantida]
         const tbody = document.getElementById('productsTableBody');
         if (!tbody) return;
 
@@ -552,23 +623,21 @@ class StoreManager {
             row.className = 'hover:bg-gray-50';
             
             row.innerHTML = `
-                <td class="py-2 px-4 border-b">${prod.name}</td>
-                <td class="py-2 px-4 border-b">${category ? category.name : 'Sem Categoria'}</td>
-                <td class="py-2 px-4 border-b">R$ ${prod.price.toFixed(2).replace('.', ',')}</td>
-                <td class="py-2 px-4 border-b">${prod.stock}</td>
-                <td class="py-2 px-4 border-b text-center space-x-2">
-                    <button type="button" onclick="storeManager.editProduct('${prod.id}')" class="text-blue-500 hover:text-blue-700">Editar</button>
-                    <button type="button" onclick="storeManager.deleteProduct('${prod.id}')" class="text-red-500 hover:text-red-700">Excluir</button>
+                <td class="py-2 px-6 border-b">${prod.name}</td>
+                <td class="py-2 px-6 border-b">${category ? category.name : 'Sem Categoria'}</td>
+                <td class="py-2 px-6 border-b">R$ ${prod.price.toFixed(2).replace('.', ',')}</td>
+                <td class="py-2 px-6 border-b">${prod.stock}</td>
+                <td class="py-2 px-6 border-b text-center space-x-2">
+                    <button type="button" onclick="storeManager.editProduct('${prod.id}')" class="text-blue-500 hover:text-blue-700 font-medium">Editar</button>
+                    <button type="button" onclick="storeManager.deleteProduct('${prod.id}')" class="text-red-500 hover:text-red-700 font-medium">Excluir</button>
                 </td>
             `;
         });
     }
 
-    openProductModal(productId = null) {
-        // [Função para abrir modal de produto - Mantida]
-        const modal = document.getElementById('productModal');
-        const form = document.getElementById('productForm');
+    renderProductModalCategories() {
         const categorySelect = document.getElementById('productCategoryId');
+        if (!categorySelect) return;
         
         categorySelect.innerHTML = '';
         this.data.categorias.forEach(cat => {
@@ -577,6 +646,13 @@ class StoreManager {
             option.textContent = cat.name;
             categorySelect.appendChild(option);
         });
+    }
+
+    openProductModal(productId = null) {
+        const modal = document.getElementById('productModal');
+        const form = document.getElementById('productForm');
+        
+        this.renderProductModalCategories(); // Garante categorias atualizadas
 
         form.reset();
         document.getElementById('productId').value = '';
@@ -603,7 +679,6 @@ class StoreManager {
     }
     
     saveProduct() {
-        // [Função para salvar produto - Mantida]
         const productId = document.getElementById('productId').value;
         
         const productData = {
@@ -645,6 +720,7 @@ class StoreManager {
     
     // ====================================================================
     // UTILIDADES (ALERTA DE ESTOQUE E TOAST)
+    // (Mantidos do V3.0)
     // ====================================================================
 
     checkLowStockAlerts() {
@@ -667,7 +743,7 @@ class StoreManager {
 
     toast(message, className = 'bg-gray-800') {
         const toastEl = document.createElement('div');
-        toastEl.className = `fixed bottom-4 right-4 text-white p-3 rounded-lg shadow-xl ${className} z-50 transition-opacity duration-300`;
+        toastEl.className = `fixed bottom-4 right-4 text-white p-3 rounded-xl shadow-xl ${className} z-50 transition-opacity duration-300`;
         toastEl.textContent = message;
         document.body.appendChild(toastEl);
         
