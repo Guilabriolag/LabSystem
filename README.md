@@ -1,47 +1,71 @@
-LabSystem
-O LabSystem é um sistema de Gerenciamento de Conteúdo (CMS) Serverless personalizado, projetado para ser uma solução completa para lojas — como restaurantes, lanchonetes ou cafés — que necessitam de um Totem Digital (lado do cliente) e um Painel de Administração (lado gerencial), sem depender de um servidor de hospedagem tradicional.
 
-O que é o LabSystem?
-O LabSystem é um ecossistema digital dividido em duas partes principais, que funcionam de forma independente e utilizam um banco de dados em nuvem simples (como o JSONBin) para sincronização.
+☆
+# 🚀 LabSystem: Gerenciamento Serverless para Lojas
 
-1. Painel CMS de Gerenciamento (CMS Control)
-Interface administrativa (index1.html) com foco em UI/UX avançado, responsável por controlar toda a operação da loja.
+O **LabSystem** é um sistema de Gerenciamento de Conteúdo (CMS) Serverless personalizado, projetado para ser uma solução completa para estabelecimentos como restaurantes, lanchonetes ou cafés. Ele oferece um **Totem Digital** (lado do cliente) e um **Painel de Administração** (lado gerencial) que operam sem depender de um servidor de hospedagem tradicional, garantindo autonomia e baixo custo operacional.
 
-Módulo
+## O Que é o LabSystem?
 
-Descrição
+O LabSystem é um ecossistema digital dividido em duas partes principais que funcionam de forma independente, utilizando um banco de dados em nuvem simples (como o JSONBin) para sincronização de dados.
 
-Publicação
+| Módulo | Descrição |
+| :--- | :--- |
+| **Painel CMS de Gerenciamento** | Interface administrativa (`cms_admin/index1.html`) responsável por configurar, gerenciar e publicar todo o conteúdo da loja. |
+| **Totem / Loja Digital** | Interface de exibição (`totem/index1.html`), que lê os dados publicados em tempo real e apresenta o cardápio, cores e status da loja. |
 
-Sincroniza e envia todos os dados (cardápio, cores, status) para o Totem Digital usando o JSONBin e a Master Key.
+-----
 
-Dados Operacionais
+## 💻 Painel CMS de Gerenciamento (CMS Control)
 
-Gerencia informações vitais da loja, como Status de Abertura/Fechamento, contato via WhatsApp, e Taxas/Áreas de Entrega (por bairro/tempo).
+O Painel CMS oferece uma interface administrativa com foco em UI/UX avançado para controlar toda a operação da loja.
 
-Cardápio / Itens
+\<div align="center"\>
+\<a href="[https://guilabriolag.github.io/LabSystem/cms\_admin/index](https://guilabriolag.github.io/LabSystem/cms_admin/index)" target="\_blank" rel="noopener noreferrer"\>
+\<img src="[https://img.shields.io/badge/Acessar%20CMS-50B4D1?style=for-the-badge\&logo=googlechrome\&logoColor=white](https://www.google.com/search?q=https://img.shields.io/badge/Acessar%2520CMS-50B4D1%3Fstyle%3Dfor-the-badge%26logo%3Dgooglechrome%26logoColor%3Dwhite)" alt="Botão Acessar CMS"\>
+\</a\>
+\</div\>
 
-Controla Categorias e Produtos, incluindo nome, preço, imagem, estoque e alertas de baixo estoque.
+| Módulo | Funcionalidade Detalhada |
+| :--- | :--- |
+| **Publicação** | Sincroniza e envia todos os dados (cardápio, cores, status) para o Totem Digital usando o **JSONBin** e a **Master Key**. |
+| **Dados Operacionais** | Gerencia informações vitais: **Status de Abertura/Fechamento**, contato via **WhatsApp**, e configuração de **Taxas/Áreas de Entrega** (por bairro/tempo). |
+| **Cardápio / Itens** | Controle completo de **Categorias e Produtos**, incluindo nome, preço, imagem, estoque e **alertas de baixo estoque**. |
+| **Customizar Totem** | Define a experiência visual do Totem, ajustando **cores**, **logo**, **imagem de fundo** e **música ambiente** (via URL do YouTube) com controle de volume. |
 
-Customizar Totem
+-----
 
-Define a experiência visual do Totem, ajustando cores, logo, imagem de fundo e música ambiente (via URL do YouTube) com controle de volume.
+## 🏗️ Principais Pilares do Conceito Serverless
 
-2. Totem / Loja Digital (Lado do Cliente)
-Interface exibida ao cliente (por exemplo, em /totem/index1.html), que lê os dados publicados no JSONBin e apresenta o cardápio, cores e status da loja em tempo real.
+O LabSystem adota uma arquitetura Serverless (Sem Servidor) baseada em simplicidade, autonomia e baixo custo operacional.
 
-Principais Pilares do Conceito Serverless
-O LabSystem adota uma arquitetura Serverless (Sem Servidor), baseada em simplicidade, autonomia e baixo custo operacional.
+### 1\. Custo e Simplicidade
 
-Armazenamento Local (Rascunho): Todos os ajustes feitos no Painel CMS são salvos inicialmente no navegador, via LocalStorage, permitindo edição offline e segurança de dados antes da publicação.
-Sincronização na Nuvem: Ao acionar “Publicar e Sincronizar Dados”, as informações locais são enviadas ao JSONBin utilizando a Master Key, garantindo atualização instantânea no Totem Digital.
-Tecnologia Base: Desenvolvido inteiramente com HTML, CSS (Tailwind CSS) e JavaScript, eliminando a necessidade de linguagens de servidor (PHP, Python, Node.js) e bancos de dados tradicionais.
-Benefícios do LabSystem
-Custo Zero de Hospedagem: Dispensa servidores dedicados ou planos de hospedagem.
-Atualização Instantânea: Sincronização direta entre CMS e Totem via nuvem.
-Escalabilidade Simples: Pode ser replicado para múltiplas lojas com configurações independentes.
-Segurança e Controle: Dados sensíveis protegidos pela Master Key e armazenados apenas no navegador e na nuvem.
-Design Personalizável: Interface moderna e adaptável à identidade visual de cada marca.
-Conclusão
-O LabSystem representa uma nova abordagem para gestão digital de lojas, unindo simplicidade, autonomia e eficiência.
-Com sua estrutura Serverless, oferece uma solução centralizada, leve e de baixo custo para administrar e exibir informações de forma moderna e integrada.
+  * **Custo Zero de Hospedagem:** Dispensa servidores dedicados, bancos de dados tradicionais (MySQL, PostgreSQL) ou planos de hospedagem caros.
+  * **Tecnologia Base:** Desenvolvido inteiramente com **HTML, CSS (Tailwind CSS)** e **JavaScript**, eliminando a necessidade de linguagens de servidor (PHP, Python, Node.js).
+
+### 2\. Autonomia e Sincronização
+
+  * **Armazenamento Local (Rascunho):** Todos os ajustes feitos no Painel CMS são salvos inicialmente no navegador, via **LocalStorage**, permitindo **edição offline** e segurança de dados antes da publicação.
+  * **Sincronização na Nuvem:** Ao acionar **“Publicar e Sincronizar Dados”**, as informações locais são enviadas ao JSONBin, garantindo **atualização instantânea** no Totem Digital.
+
+### 3\. Segurança e Controle
+
+  * **Segurança de Dados:** Os dados sensíveis são protegidos pela **Master Key** no processo de escrita/publicação no JSONBin.
+  * **Facilidade de Implantação:** A instalação é feita apenas copiando os arquivos para qualquer plataforma de hospedagem estática (GitHub Pages, Vercel, Netlify).
+
+-----
+
+## ✨ Vantagens e Benefícios do LabSystem
+
+O LabSystem representa uma nova abordagem para gestão digital, unindo simplicidade, autonomia e eficiência.
+
+| Vantagem | Descrição |
+| :--- | :--- |
+| **Atualização Instantânea** | Sincronização direta e em tempo real entre o CMS e o Totem (lado do cliente) via nuvem, sem atrasos. |
+| **Controle Visual** | O módulo **Customizar Totem** permite adaptar a interface à identidade visual de cada marca de forma imediata. |
+| **Design Moderno** | Interface limpa, moderna e responsiva, garantindo uma experiência de cliente agradável em qualquer dispositivo. |
+| **Escalabilidade Simples** | O projeto pode ser replicado facilmente para múltiplas lojas, cada uma com seu próprio Bin ID e configurações independentes. |
+
+### Conclusão
+
+O LabSystem oferece uma solução centralizada, leve e de baixo custo para administrar e exibir informações da loja de forma moderna e integrada. É a prova de que a gestão digital eficiente pode ser alcançada sem a complexidade e os custos de uma arquitetura baseada em servidor.
