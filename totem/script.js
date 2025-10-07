@@ -34,7 +34,7 @@ class TotemManager {
     }
 
     async loadRemoteData() {
-        if (!this.BIN_ID || this.BIN_ID === '.###########.) {
+        if (!this.BIN_ID || this.BIN_ID === '68e36776ae596e708f07b93a') {
             console.error('BIN ID não configurado no script.js do Totem.');
             return;
         }
