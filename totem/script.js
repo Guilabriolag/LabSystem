@@ -39,7 +39,7 @@ class TotemManager {
             return;
         }
 
-        const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
+        const url = `https://api.jsonbin.io/v3/b/68e36776ae596e708f07b93a/latest`;
         
         try {
             const response = await fetch(url, {
