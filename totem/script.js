@@ -4,7 +4,7 @@
 
 class TotemManager {
     constructor() {
-        this.BIN_ID = '68e36776ae596e708f07b93a'; // ⚠️ ATUALIZE COM SEU BIN ID PÚBLICO!
+        this.BIN_ID = 'YOUR_PUBLIC_BIN_ID_HERE'; // ⚠️ ATUALIZE COM SEU BIN ID PÚBLICO!
         this.data = null;
         this.cart = []; // { id: 'prod-x', name: 'Product Name', price: 10.00, qty: 1 }
         this.selectedCategory = null; 
@@ -34,7 +34,7 @@ class TotemManager {
     }
 
     async loadRemoteData() {
-        if (!this.BIN_ID || this.BIN_ID === '68e36776ae596e708f07b93a') {
+        if (!this.BIN_ID || this.BIN_ID === 'YOUR_PUBLIC_BIN_ID_HERE') {
             console.error('BIN ID não configurado no script.js do Totem.');
             return;
         }
