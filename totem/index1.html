@@ -3,166 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabSystem Totem Digital</title>
+    <title>Totem Digital - LabSystem Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Variáveis CSS para Cores Dinâmicas */
+        /* Variáveis de cores definidas pelo JavaScript para personalização */
         :root {
-            --color-primary: #10B981; /* Default: Emerald-500 */
-            --color-text: #FFFFFF;    /* Default: White */
-            --color-background: #f9fafb; /* Default: Gray-50 */
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--color-background);
-            transition: background-color 0.5s ease;
+            --color-primary: #10B981; /* Default esmeralda */
+            --color-primary-contrast: #FFFFFF;
+            --color-text: #FFFFFF;
+            --color-background: #f9fafb;
         }
 
-        /* Aplica a cor primária dinâmica */
+        /* Classes utilitárias do Tailwind que usam as variáveis de cor */
         .bg-primary { background-color: var(--color-primary); }
         .text-primary { color: var(--color-primary); }
-        .border-primary { border-color: var(--color-primary); }
-        .hover\:bg-primary-dark:hover { background-color: var(--color-primary); filter: brightness(90%); }
-        
-        /* Aplica a cor de texto (botões/header) */
+        .hover\:bg-primary-dark:hover { background-color: #059669; /* Um tom mais escuro para hover */ }
         .text-primary-contrast { color: var(--color-text); }
+        
+        body {
+            background-color: var(--color-background);
+            transition: background-color 0.5s;
+        }
 
-        /* Estilo para a animação fade-in */
-        .fade-in { animation: fadeIn 0.5s ease-out; }
+        /* Estilo para imagem de fundo */
+        .bg-image-cover {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Animação de fade-in para produtos */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Sidebar de Categorias no Desktop */
-        #category-sidebar {
-            /* Fixa a barra para rolagem suave do conteúdo */
-            position: sticky;
-            top: 0;
-            max-height: 100vh;
-            overflow-y: auto;
-        }
 
-        /* Custom scrollbar for webkit browsers */
-        #category-sidebar::-webkit-scrollbar {
-            width: 6px;
+        /* Fixa o player de música fora da tela */
+        #youtube-player {
+            position: fixed;
+            bottom: -50px; 
+            right: -50px;
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
         }
-        #category-sidebar::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
-        }
-        
-        /* Estilo para imagem de fundo (quando houver) */
-        .bg-image-cover {
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
     </style>
 </head>
-<body>
-    
-    <div id="youtube-player" class="absolute top-0 left-0 w-1 h-1 overflow-hidden" style="pointer-events: none;"></div>
+<body class="min-h-screen">
 
-    <div id="app-container" class="min-h-screen">
+    <div id="app-container" class="pb-20">
 
-        <header class="bg-primary text-primary-contrast shadow-lg sticky top-0 z-20">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-                
+        <header class="bg-primary text-primary-contrast shadow-xl sticky top-0 z-10">
+            <div class="container mx-auto p-4 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <img id="store-logo" src="" alt="Logo da Loja" class="h-10 w-auto rounded-lg hidden">
-                    <h1 id="store-name-display" class="text-2xl font-extrabold">LabSystem Store</h1>
+                    <img id="store-logo" class="h-10 hidden" alt="Logo da Loja">
+                    <h1 id="store-name-display" class="text-3xl font-extrabold">Totem Digital</h1>
+                    
+                    <span id="store-status-badge">
+                        <span id="status-text">Carregando...</span>
+                    </span>
                 </div>
                 
-                <div id="store-status-badge" class="px-4 py-1.5 rounded-full font-bold text-sm shadow-md">
-                    <span id="status-text"></span>
-                </div>
+                <button id="cart-button" onclick="totemManager.openCheckoutModal()" 
+                        class="bg-white text-primary px-5 py-2.5 rounded-full font-bold shadow-2xl transition hover:bg-gray-100 disabled:opacity-50"
+                        disabled>
+                    <span id="cart-item-count" class="mr-1">0</span> item(s) • <span id="cart-total-display">R$ 0,00</span>
+                </button>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 p-4 sm:p-6 lg:p-8">
+        <div id="store-closed-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mx-auto my-4 w-11/12 rounded-lg" role="alert">
+            <p class="font-bold">Estamos Fechados!</p>
+            <p>Os pedidos não podem ser realizados no momento.</p>
+        </div>
 
-            <div id="category-sidebar" class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-                <h2 class="text-xl font-bold mb-4 border-b pb-2 text-gray-700">Cardápio</h2>
-                <div id="categories-list" class="space-y-2">
-                    <p class="text-gray-500 text-sm" id="loading-categories">Carregando categorias...</p>
-                </div>
-            </div>
+        <main class="container mx-auto p-4 flex flex-col lg:flex-row gap-6">
 
-            <div id="products-container" class="lg:col-span-3">
-                <h2 id="current-category-title" class="text-3xl font-bold mb-6 text-gray-800">Todos os Produtos</h2>
-                
-                <div id="menu-items-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <aside class="w-full lg:w-1/4">
+                <div class="bg-white p-4 rounded-2xl shadow-xl sticky top-20">
+                    <h2 class="text-xl font-extrabold mb-4 text-gray-800">Categorias</h2>
+                    
+                    <div id="loading-categories" class="text-center p-4">
+                         <div class="animate-pulse bg-gray-200 h-6 w-3/4 mb-2 rounded-lg"></div>
+                         <div class="animate-pulse bg-gray-200 h-6 w-1/2 mb-2 rounded-lg"></div>
+                         <div class="animate-pulse bg-gray-200 h-6 w-5/6 rounded-lg"></div>
                     </div>
 
-                <div id="store-closed-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mt-8 shadow-md">
-                    <p class="font-bold text-lg">🔴 Loja Fechada</p>
-                    <p>Lamentamos, mas não estamos aceitando pedidos no momento.</p>
+                    <nav id="categories-list" class="space-y-2">
+                        </nav>
                 </div>
-            </div>
-            
+            </aside>
+
+            <section class="w-full lg:w-3/4">
+                <div class="mb-6">
+                    <h2 id="current-category-title" class="text-3xl font-extrabold text-gray-800">Cardápio</h2>
+                </div>
+                
+                <div id="products-container">
+                    <div id="menu-items-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        </div>
+                </div>
+            </section>
+
         </main>
-        
-        <button id="cart-button" onclick="totemManager.openCheckoutModal()" class="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 bg-primary text-primary-contrast p-4 rounded-full shadow-2xl hover:bg-primary-dark transition transform hover:scale-105 z-50 disabled:opacity-50">
-            <div class="flex items-center space-x-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span id="cart-item-count" class="font-bold text-lg">0</span>
-                <span id="cart-total-display" class="font-bold text-lg">R$ 0,00</span>
-            </div>
-        </button>
+
+        <div id="youtube-player"></div>
 
     </div>
-    
-    <div id="checkout-modal" class="fixed inset-0 bg-gray-900 bg-opacity-70 overflow-y-auto h-full w-full hidden" style="z-index: 100;">
-        <div class="relative top-16 mx-auto p-8 border w-11/12 md:w-2/3 lg:w-1/2 shadow-2xl rounded-2xl bg-white transform transition-all">
-            <h3 class="text-2xl font-bold mb-4 border-b pb-2 text-gray-800">🛒 Revisar Pedido e Finalizar</h3>
-            
-            <div id="checkout-list" class="space-y-4 max-h-96 overflow-y-auto mb-4 p-2">
-                </div>
-            
-            <div class="text-lg font-bold flex justify-between border-t pt-4">
-                <span>Total a Pagar:</span>
-                <span id="final-total-display" class="text-primary">R$ 0,00</span>
-            </div>
-            
-            <h4 class="text-xl font-bold mt-6 mb-3 border-t pt-4 text-gray-700">Detalhes de Contato</h4>
-            <input type="text" id="client-name" class="mt-1 block w-full border rounded-xl p-3 shadow-sm bg-gray-50 mb-3" placeholder="Seu Nome (Obrigatório)" required>
-            
-            <div class="mb-4">
-                <label class="inline-flex items-center mr-6">
-                    <input type="radio" name="delivery-option" value="Retirada" checked class="form-radio text-primary" onchange="totemManager.updateDeliveryDetails()">
-                    <span class="ml-2 font-medium">🛵 Retirada no Local</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="radio" name="delivery-option" value="Entrega" class="form-radio text-primary" onchange="totemManager.updateDeliveryDetails()">
-                    <span class="ml-2 font-medium">📍 Quero Entrega</span>
-                </label>
-            </div>
-            
-            <div id="delivery-details-container" class="hidden space-y-3 p-4 bg-gray-50 rounded-xl mb-4 border border-gray-200">
-                <input type="text" id="client-address" class="mt-1 block w-full border rounded-xl p-3 shadow-sm" placeholder="Rua e Número (Obrigatório)" required>
-                <select id="client-area" class="mt-1 block w-full border rounded-xl p-3 shadow-sm" onchange="totemManager.updateDeliveryDetails()">
-                    <option value="">Selecione seu Bairro/Área (Taxa)</option>
-                    </select>
-                <div id="delivery-tax-display" class="text-sm text-red-600 font-semibold">Taxa de entrega será adicionada ao total.</div>
-            </div>
-            
-            <h4 class="text-xl font-bold mt-6 mb-3 border-t pt-4 text-gray-700">Forma de Pagamento</h4>
-            <div id="payment-options" class="space-y-2">
-                </div>
 
-            <div class="flex justify-between space-x-3 pt-6">
-                <button type="button" onclick="totemManager.closeCheckoutModal()" class="bg-gray-300 px-6 py-3 rounded-xl hover:bg-gray-400 transition font-semibold">Voltar ao Cardápio</button>
-                <button id="finish-order-btn" type="button" onclick="totemManager.generateWhatsAppLink()" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition font-extrabold shadow-lg disabled:opacity-50">
-                    ✅ Fazer Pedido via WhatsApp
-                </button>
+    <div id="checkout-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8">
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-3">Finalizar Pedido</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-primary">Seu Carrinho (<span id="cart-item-count-modal">0</span> itens)</h3>
+                    <div id="checkout-list" class="space-y-3 max-h-80 overflow-y-auto pr-2">
+                        </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-dashed">
+                        <p id="delivery-tax-display" class="text-gray-600 mb-2">Retirada no Local (sem taxa)</p>
+                        <p class="text-3xl font-extrabold text-gray-800">TOTAL: <span id="final-total-display" class="text-primary ml-2">R$ 0,00</span></p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-primary">Seus Dados</h3>
+                    <form onsubmit="event.preventDefault(); totemManager.generateWhatsAppLink()">
+                        
+                        <div class="mb-4">
+                            <label for="client-name" class="block font-medium text-gray-700 mb-1">Seu Nome/Apelido*</label>
+                            <input type="text" id="client-name" class="w-full border rounded-xl p-3 shadow-sm focus:ring-primary focus:border-primary" placeholder="Ex: João Silva" required oninput="totemManager.validateCheckout()">
+                        </div>
+
+                        <div class="mb-4 bg-gray-100 p-4 rounded-xl">
+                            <label class="block font-medium text-gray-700 mb-2">Forma de Recebimento</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="delivery-option" value="Entrega" class="form-radio text-primary" checked onchange="totemManager.updateDeliveryDetails()">
+                                    <span class="ml-2">🛵 Entrega</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="delivery-option" value="Retirada" class="form-radio text-primary" onchange="totemManager.updateDeliveryDetails()">
+                                    <span class="ml-2">🏃 Retirada no Local</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="delivery-details-container" class="space-y-4">
+                            <div class="mb-4">
+                                <label for="client-area" class="block font-medium text-gray-700 mb-1">Selecione sua Área/Bairro*</label>
+                                <select id="client-area" class="w-full border rounded-xl p-3 shadow-sm focus:ring-primary focus:border-primary" onchange="totemManager.updateDeliveryDetails()">
+                                    <option value="">Selecione...</option>
+                                    </select>
+                            </div>
+                            <div class="mb-4">
+                                <label for="client-address" class="block font-medium text-gray-700 mb-1">Rua, Número e Ponto de Referência*</label>
+                                <input type="text" id="client-address" class="w-full border rounded-xl p-3 shadow-sm focus:ring-primary focus:border-primary" placeholder="Ex: Rua A, 123, perto da praça" oninput="totemManager.validateCheckout()">
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-bold mt-6 mb-3 text-gray-800">Pagamento</h3>
+                        <div id="payment-options" class="space-y-3">
+                            </div>
+
+                        <div class="mt-8 flex justify-between space-x-4">
+                            <button type="button" onclick="totemManager.closeCheckoutModal()" 
+                                    class="w-1/2 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-gray-100">
+                                Voltar
+                            </button>
+                            <button type="submit" id="finish-order-btn" 
+                                    class="w-1/2 py-3 bg-primary text-primary-contrast font-bold rounded-xl shadow-lg transition hover:bg-primary-dark disabled:opacity-50"
+                                    disabled>
+                                Enviar Pedido por WhatsApp
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    </script>
     
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="script.js"></script>
+
 </body>
-    </html>
+</html>
