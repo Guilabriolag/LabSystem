@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabSystem: Gerenciamento Serverless para Lojas</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos Base */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #2c5282;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #edf2f7;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+
+        /* Estilos de Seção */
+        .section-box {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        /* Tabelas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebf8ff;
+        }
+        th {
+            background-color: #e2e8f0;
+            color: #2d3748;
+            font-weight: 700;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        
+        /* Botão de Acesso (Estilo Shield) */
+        .access-button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .access-button {
+            display: inline-block;
+            background-color: #50B4D1; /* Cor do shield */
+            color: white;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            font-size: 1.1em;
+            box-shadow: 0 4px 10px rgba(80, 180, 209, 0.4);
+        }
+        .access-button:hover {
+            background-color: #3b92ad;
+        }
+        .access-button img {
+            height: 18px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        
+        /* Lista de Pilares e Vantagens */
+        .list-style {
+            list-style: none;
+            padding-left: 0;
+        }
+        .list-style li {
+            background-color: #f7f9fb;
+            border-left: 4px solid #48bb78; /* Verde primário */
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        /* Destaques (Bolding) */
+        strong {
+            font-weight: 700;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="bg-white p-6 shadow-md">
+        <div class="container">
+            <h1 style="border: none; margin-bottom: 0;">LabSystem: Gerenciamento Serverless para Lojas</h1>
+            <p style="font-size: 1.1em; color: #4a5568;">Solução completa para Totem Digital e CMS sem dependência de servidor tradicional.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section class="section-box">
+            <h2>O Que é o LabSystem?</h2>
+            <p>O LabSystem é um ecossistema digital dividido em duas partes principais que funcionam de forma independente, utilizando um banco de dados em nuvem simples (como o JSONBin) para sincronização de dados.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Módulo</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Painel CMS de Gerenciamento</strong></td>
+                        <td>Interface administrativa (<code>cms_admin/index1.html</code>) responsável por configurar, gerenciar e publicar todo o conteúdo da loja.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Totem / Loja Digital</strong></td>
+                        <td>Interface de exibição (<code>totem/index1.html</code>), que lê os dados publicados em tempo real e apresenta o cardápio, cores e status da loja.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section class="section-box">
+            <h2>💻 Painel CMS de Gerenciamento (CMS Control)</h2>
+            <p>O Painel CMS oferece uma interface administrativa com foco em UI/UX avançado para controlar toda a operação da loja.</p>
+
+            <div class="access-button-container">
+                <a href="https://guilabriolag.github.io/LabSystem/cms_admin/index" target="_blank" rel="noopener noreferrer" class="access-button">
+                    <img src="https://simpleicons.org/icons/googlechrome.svg" alt="Ícone Chrome">
+                    Acessar Painel CMS
+                </a>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Módulo</th>
+                        <th>Funcionalidade Detalhada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Publicação</strong></td>
+                        <td>Sincroniza e envia todos os dados (cardápio, cores, status) para o Totem Digital usando o **JSONBin** e a **Master Key**.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dados Operacionais</strong></td>
+                        <td>Gerencia informações vitais: **Status de Abertura/Fechamento**, contato via **WhatsApp**, e configuração de **Taxas/Áreas de Entrega** (por bairro/tempo).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cardápio / Itens</strong></td>
+                        <td>Controle completo de **Categorias e Produtos**, incluindo nome, preço, imagem, estoque e **alertas de baixo estoque**.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Customizar Totem</strong></td>
+                        <td>Define a experiência visual do Totem, ajustando **cores**, **logo**, **imagem de fundo** e **música ambiente** (via URL do YouTube) com controle de volume.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section-box">
+            <h2>🏗️ Principais Pilares do Conceito Serverless</h2>
+            <p>O LabSystem adota uma arquitetura Serverless (Sem Servidor) baseada em simplicidade, autonomia e baixo custo operacional.</p>
+            
+            <h3 style="font-size: 1.4em; font-weight: 700; margin-top: 25px;">1. Custo e Simplicidade</h3>
+            <ul class="list-style">
+                <li>**Custo Zero de Hospedagem:** Dispensa servidores dedicados, bancos de dados tradicionais (MySQL, PostgreSQL) ou planos de hospedagem caros.</li>
+                <li>**Tecnologia Base:** Desenvolvido inteiramente com **HTML, CSS (Tailwind CSS)** e **JavaScript**, eliminando a necessidade de linguagens de servidor.</li>
+            </ul>
+
+            <h3 style="font-size: 1.4em; font-weight: 700; margin-top: 25px;">2. Autonomia e Sincronização</h3>
+            <ul class="list-style">
+                <li>**Armazenamento Local (Rascunho):** Todos os ajustes feitos no Painel CMS são salvos inicialmente no navegador, via **LocalStorage**, permitindo **edição offline**.</li>
+                <li>**Sincronização na Nuvem:** As informações locais são enviadas ao JSONBin, garantindo **atualização instantânea** no Totem Digital.</li>
+            </ul>
+            
+            <h3 style="font-size: 1.4em; font-weight: 700; margin-top: 25px;">3. Segurança e Controle</h3>
+            <ul class="list-style">
+                <li>**Segurança de Dados:** Os dados sensíveis são protegidos pela **Master Key** no processo de escrita/publicação no JSONBin.</li>
+                <li>**Facilidade de Implantação:** A instalação é feita apenas copiando os arquivos para qualquer plataforma de hospedagem estática.</li>
+            </ul>
+        </section>
+        
+        <section class="section-box">
+            <h2>✨ Vantagens e Benefícios do LabSystem</h2>
+            <p>O LabSystem oferece uma solução centralizada, leve e de baixo custo para administrar e exibir informações da loja de forma moderna e integrada.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vantagem</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Atualização Instantânea</strong></td>
+                        <td>Sincronização direta e em tempo real entre o CMS e o Totem (lado do cliente) via nuvem, sem atrasos.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Controle Visual</strong></td>
+                        <td>O módulo **Customizar Totem** permite adaptar a interface à identidade visual de cada marca de forma imediata.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Design Moderno</strong></td>
+                        <td>Interface limpa, moderna e responsiva, garantindo uma experiência de cliente agradável em qualquer dispositivo.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Escalabilidade Simples</strong></td>
+                        <td>O projeto pode ser replicado facilmente para múltiplas lojas, cada uma com seu próprio Bin ID e configurações independentes.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section class="section-box" style="text-align: center;">
+            <p style="font-size: 1.2em; font-weight: 500; color: #2c5282;">
+                O LabSystem representa uma nova abordagem para gestão digital de lojas, unindo simplicidade, autonomia e eficiência.
+            </p>
+        </section>
+        
+    </main>
+
+    <footer class="bg-white p-4 shadow-md mt-10">
+        <div class="container" style="text-align: center; color: #718096;">
+            &copy; 2025 LabSystem. Todos os direitos reservados.
+        </div>
+    </footer>
+
+</body>
+                      </html>
