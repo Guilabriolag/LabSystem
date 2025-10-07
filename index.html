@@ -4,177 +4,342 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LabSystem: Gerenciamento Serverless</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        /* Estilo para a transição suave do splash screen */
-        #splash-screen {
-            transition: opacity 0.5s ease-out;
+        /* Variáveis de Cores Solicitadas */
+        :root {
+            --color-primary: #1f298f; /* Azul Escuro/Índigo */
+            --color-secondary: #ffcf69; /* Amarelo/Dourado */
+            --color-text-dark: #1a202c;
+            --color-text-light: #ffffff;
         }
-        /* Classes Tailwind personalizadas para o verde primário do LabSystem */
-        .text-lab-green { color: #10B981; }
-        .bg-lab-green { background-color: #10B981; }
-        .border-lab-green { border-color: #10B981; }
-        .hover\:bg-lab-green-dark:hover { background-color: #059669; }
 
-        /* Animação para destaque de itens de lista/tabela */
-        .list-item-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        /* Estilos Base */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
         }
         
-        /* Efeito de fade-in no conteúdo após o splash */
-        .content-fade-in {
-            animation: fadeIn 1s ease-in-out;
+        /* Estilos de Títulos */
+        h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: var(--color-text-dark);
+            margin-bottom: 10px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        h2 {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--color-primary);
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos de Seção */
+        .section-box {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        /* Botões de Acesso (Dinâmicos) */
+        .access-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 700;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .btn-cms {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+        }
+        .btn-cms:hover {
+            background-color: #1a237e;
+            transform: translateY(-2px);
+        }
+        .btn-totem {
+            background-color: var(--color-secondary);
+            color: var(--color-text-dark);
+        }
+        .btn-totem:hover {
+            background-color: #f7a61d;
+            transform: translateY(-2px);
+        }
+        .btn svg {
+            margin-right: 8px;
+            height: 20px;
+        }
+
+        /* Tabelas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebf8ff;
+        }
+        th {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            font-weight: 700;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+
+        /* Estilo para a Logo no Header */
+        .header-logo {
+            height: 45px;
+            margin-right: 15px;
+            vertical-align: middle;
+        }
+        
+        /* SPLASH SCREEN STYLES */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+        .splash-logo {
+            height: 120px;
+            animation: pulse 1.5s infinite;
+        }
+        .loading-text {
+            color: var(--color-secondary);
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-top: 20px;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        
+        /* Esconde o conteúdo principal até o splash sumir */
+        #main-content {
+            opacity: 0;
+            transition: opacity 0.8s;
         }
     </style>
 </head>
-<body class="bg-gray-50 antialiased">
+<body>
 
-    <div id="splash-screen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+    <div id="splash-screen">
         <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7T-L3I1t95j33Pu9cdst8hHJShqSHsjSu09-kpkNNWxkb1R2hhTSqdr3DGtTmv74y6gxla4YUaGzThga3M1UaJcPuterWAMycodowVFBpHRMmRPmOmI3zpexmBBaiHg6Mvb24ggw1dcJ3Hh8CZFRho4PjBcGxhRzR9rkcx-x1hpLpHBlEmIEyRwE3n-By/s756/20250918_001110.png" 
-             alt="LabSystem Logo" class="w-48 h-48 animate-pulse">
-        <p class="mt-8 text-xl text-gray-700 font-semibold">Carregando LabSystem...</p>
+             alt="LabSystem Logo" class="splash-logo">
+        <div class="loading-text">Carregando LabSystem...</div>
     </div>
+    
+    <div id="main-content">
+        <header class="bg-white p-6 shadow-md">
+            <div class="container">
+                <div style="display: flex; align-items: center;">
+                    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7T-L3I1t95j33Pu9cdst8hHJShqSHsjSu09-kpkNNWxkb1R2hhTSqdr3DGtTmv74y6gxla4YUaGzThga3M1UaJcPuterWAMycodowVFBpHRMmRPmOmI3zpexmBBaiHg6Mvb24ggw1dcJ3Hh8CZFRho4PjBcGxhRzR9rkcx-x1hpLpHBlEmIEyRwE3n-By/s756/20250918_001110.png" 
+                         alt="LabSystem Logo" class="header-logo">
+                    <h1 style="border: none; margin-bottom: 0;">LabSystem: Gerenciamento Serverless</h1>
+                </div>
+                <p style="font-size: 1.1em; color: #4a5568;">Solução Serverless completa para Totem Digital e CMS.</p>
 
-    <div id="main-content" class="hidden container mx-auto p-4 lg:p-8 content-fade-in">
-        
-        <header class="bg-white p-6 shadow-xl rounded-b-xl border-t-8 border-lab-green sticky top-0 z-10">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">
-                <span class="text-lab-green">LabSystem:</span> Gerenciamento Serverless
-            </h1>
-            <p class="text-gray-600 text-lg">
-                Solução completa para **Totem Digital** e **CMS** sem dependência de servidor tradicional.
-            </p>
+                <div class="access-buttons">
+                    <a href="https://guilabriolag.github.io/LabSystem/cms_admin/index" target="_blank" class="btn btn-cms">
+                        <svg fill="#FFFFFF" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H7v-4h4v4zm0-6H7V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4z"/></svg>
+                        Acessar Painel CMS
+                    </a>
+                    <a href="https://guilabriolag.github.io/LabSystem/totem/index1.html" target="_blank" class="btn btn-totem">
+                        <svg fill="#1a202c" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+                        Acessar Totem Digital
+                    </a>
+                </div>
+            </div>
         </header>
 
-        <section class="my-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-8">
-            <a href="https://guilabriolag.github.io/LabSystem/cms_admin/index" target="_blank" rel="noopener noreferrer" 
-               class="flex items-center justify-center px-8 py-4 bg-blue-600 text-white font-bold text-xl rounded-xl shadow-2xl transition duration-300 hover:bg-blue-700 hover:scale-[1.02]">
-                <span class="mr-3">⚙️</span> ACESSAR PAINEL CMS
-            </a>
-            <a href="https://guilabriolag.github.io/LabSystem/totem/index1.html" target="_blank" rel="noopener noreferrer" 
-               class="flex items-center justify-center px-8 py-4 bg-lab-green text-white font-bold text-xl rounded-xl shadow-2xl transition duration-300 hover:bg-lab-green-dark hover:scale-[1.02]">
-                <span class="mr-3">🛒</span> ACESSAR TOTEM DIGITAL
-            </a>
-        </section>
-
-        <section class="bg-white p-6 md:p-10 shadow-lg rounded-xl mb-8">
-            <h2 class="text-3xl font-bold text-gray-800 border-b pb-3 mb-6">O Que é o LabSystem?</h2>
-            <p class="text-gray-700">O LabSystem é um ecossistema digital dividido em duas partes principais que funcionam de forma independente, utilizando um banco de dados em nuvem simples (como o **JSONBin**) para sincronização de dados.</p>
-
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="p-5 bg-gray-100 rounded-lg border-l-4 border-blue-500 shadow-md">
-                    <h3 class="text-xl font-bold text-blue-700">Painel CMS de Gerenciamento</h3>
-                    <p class="mt-2 text-gray-600">Interface administrativa (<code>cms_admin/index1.html</code>) responsável por configurar, gerenciar e publicar todo o conteúdo da loja.</p>
-                </div>
-                <div class="p-5 bg-gray-100 rounded-lg border-l-4 border-lab-green shadow-md">
-                    <h3 class="text-xl font-bold text-lab-green">Totem / Loja Digital</h3>
-                    <p class="mt-2 text-gray-600">Interface de exibição (<code>totem/index1.html</code>), que lê os dados publicados em tempo real e apresenta o cardápio, cores e status da loja.</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="bg-white p-6 md:p-10 shadow-lg rounded-xl mb-8">
-            <h2 class="text-3xl font-bold text-gray-800 border-b pb-3 mb-6">🏗️ Principais Pilares do Conceito Serverless</h2>
+        <main class="container">
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <div class="p-5 bg-yellow-50 border-t-4 border-yellow-500 rounded-lg shadow-md list-item-hover transition duration-200">
-                    <h3 class="text-2xl font-bold text-yellow-700 mb-3">1. Custo e Simplicidade</h3>
-                    <ul class="space-y-3 text-gray-700 list-disc ml-5">
-                        <li>**Custo Zero de Hospedagem:** Dispensa servidores dedicados.</li>
-                        <li>**Tecnologia Base:** Apenas **HTML, CSS (Tailwind)** e **JavaScript**.</li>
-                    </ul>
-                </div>
+            <section class="section-box">
+                <h2>O Que é o LabSystem?</h2>
+                <p>O LabSystem é um ecossistema digital dividido em duas partes principais que funcionam de forma independente, utilizando um banco de dados em nuvem simples (como o JSONBin) para sincronização de dados.</p>
 
-                <div class="p-5 bg-blue-50 border-t-4 border-blue-500 rounded-lg shadow-md list-item-hover transition duration-200">
-                    <h3 class="text-2xl font-bold text-blue-700 mb-3">2. Autonomia e Sincronização</h3>
-                    <ul class="space-y-3 text-gray-700 list-disc ml-5">
-                        <li>**Armazenamento Local:** Edição offline via **LocalStorage**.</li>
-                        <li>**Atualização Instantânea:** Sincronização direta via **JSONBin** para o Totem.</li>
-                    </ul>
-                </div>
-
-                <div class="p-5 bg-green-50 border-t-4 border-lab-green rounded-lg shadow-md list-item-hover transition duration-200">
-                    <h3 class="text-2xl font-bold text-lab-green mb-3">3. Segurança e Controle</h3>
-                    <ul class="space-y-3 text-gray-700 list-disc ml-5">
-                        <li>**Segurança:** Dados sensíveis protegidos pela **Master Key**.</li>
-                        <li>**Controle:** Solução leve e centralizada para gestão total.</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-        
-        <section class="bg-white p-6 md:p-10 shadow-lg rounded-xl mb-8">
-            <h2 class="text-3xl font-bold text-gray-800 border-b pb-3 mb-6">✨ Vantagens e Benefícios do LabSystem</h2>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-                    <thead class="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
+                <table>
+                    <thead>
                         <tr>
-                            <th class="py-3 px-6 text-left">Vantagem</th>
-                            <th class="py-3 px-6 text-left">Descrição</th>
+                            <th>Módulo</th>
+                            <th>Descrição</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-600 text-sm font-light divide-y divide-gray-200">
-                        <tr class="hover:bg-gray-50 transition duration-150">
-                            <td class="py-3 px-6 font-bold text-lab-green">Atualização Instantânea</td>
-                            <td class="py-3 px-6">Sincronização direta e em tempo real entre o CMS e o Totem (lado do cliente) via nuvem, sem atrasos.</td>
+                    <tbody>
+                        <tr>
+                            <td><strong>Painel CMS de Gerenciamento</strong></td>
+                            <td>Interface administrativa (<code>cms_admin/index1.html</code>) responsável por configurar, gerenciar e publicar todo o conteúdo da loja.</td>
                         </tr>
-                        <tr class="hover:bg-gray-50 transition duration-150">
-                            <td class="py-3 px-6 font-bold text-lab-green">Controle Visual</td>
-                            <td class="py-3 px-6">O módulo **Customizar Totem** permite adaptar a interface à identidade visual de cada marca de forma imediata.</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition duration-150">
-                            <td class="py-3 px-6 font-bold text-lab-green">Design Moderno</td>
-                            <td class="py-3 px-6">Interface limpa, moderna e responsiva, garantindo uma experiência de cliente agradável em qualquer dispositivo.</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50 transition duration-150">
-                            <td class="py-3 px-6 font-bold text-lab-green">Escalabilidade Simples</td>
-                            <td class="py-3 px-6">O projeto pode ser replicado facilmente para múltiplas lojas, cada uma com seu próprio Bin ID e configurações independentes.</td>
+                        <tr>
+                            <td><strong>Totem / Loja Digital</strong></td>
+                            <td>Interface de exibição (<code>totem/index1.html</code>), que lê os dados publicados em tempo real e apresenta o cardápio, cores e status da loja.</td>
                         </tr>
                     </tbody>
                 </table>
+            </section>
+            
+            <section class="section-box">
+                <h2>💻 Painel CMS de Gerenciamento (CMS Control)</h2>
+                <p>O Painel CMS oferece uma interface administrativa com foco em UI/UX avançado para controlar toda a operação da loja.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Funcionalidade Detalhada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Publicação</strong></td>
+                            <td>Sincroniza e envia todos os dados (cardápio, cores, status) para o Totem Digital usando o **JSONBin** e a **Master Key**.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dados Operacionais</strong></td>
+                            <td>Gerencia informações vitais: **Status de Abertura/Fechamento**, contato via **WhatsApp**, e configuração de **Taxas/Áreas de Entrega** (por bairro/tempo).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cardápio / Itens</strong></td>
+                            <td>Controle completo de **Categorias e Produtos**, incluindo nome, preço, imagem, estoque e **alertas de baixo estoque**.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Customizar Totem</strong></td>
+                            <td>Define a experiência visual do Totem, ajustando **cores**, **logo**, **imagem de fundo** e **música ambiente** (via URL do YouTube) com controle de volume.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="section-box">
+                <h2>🏗️ Por Que Serverless? (Autonomia e Baixo Custo)</h2>
+                <p>O LabSystem adota uma arquitetura Serverless (Sem Servidor) baseada em simplicidade, autonomia e baixo custo operacional.</p>
+                
+                <h3 style="font-size: 1.4em; font-weight: 700; margin-top: 25px;">1. Custo e Tecnologia</h3>
+                <ul style="list-style: disc; padding-left: 20px;">
+                    <li>**Custo Zero de Hospedagem:** Dispensa servidores dedicados e planos de hospedagem caros.</li>
+                    <li>**Tecnologia Base:** Desenvolvido inteiramente com **HTML, CSS (Tailwind CSS)** e **JavaScript**, eliminando a necessidade de linguagens de servidor.</li>
+                </ul>
+
+                <h3 style="font-size: 1.4em; font-weight: 700; margin-top: 25px;">2. Sincronização e Autonomia</h3>
+                <ul style="list-style: disc; padding-left: 20px;">
+                    <li>**Armazenamento Local (Rascunho):** Ajustes feitos no CMS são salvos via **LocalStorage**, permitindo **edição offline**.</li>
+                    <li>**Atualização Instantânea:** As informações locais são enviadas diretamente ao **JSONBin**, garantindo a sincronização em tempo real no Totem Digital.</li>
+                </ul>
+                
+                <h3 style="font-size: 1.4em; font-weight: 700; margin-top: 25px;">3. Segurança e Controle</h3>
+                <ul style="list-style: disc; padding-left: 20px;">
+                    <li>**Segurança:** Dados sensíveis protegidos pela **Master Key** no processo de escrita/publicação.</li>
+                    <li>**Facilidade de Implantação:** Instalação simplificada por ser um projeto estático, replicável para múltiplas lojas.</li>
+                </ul>
+            </section>
+            
+            <section class="section-box">
+                <h2>✨ Benefícios Chave do LabSystem</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vantagem</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Custo Zero Operacional</strong></td>
+                            <td>Estrutura Serverless elimina custos de manutenção e hospedagem de servidores tradicionais.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Atualização em Tempo Real</strong></td>
+                            <td>Alterações no CMS são refletidas no Totem Digital instantaneamente via nuvem.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Design Personalizável</strong></td>
+                            <td>Controle total sobre cores, logo e mídia (música/imagem de fundo) para alinhar à identidade da marca.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Foco na Experiência</strong></td>
+                            <td>Interface limpa, moderna e responsiva, garantindo uma experiência de cliente fluida em qualquer tela.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <section style="text-align: center; margin-bottom: 30px;">
+                <p style="font-size: 1.2em; font-weight: 500; color: #1f298f;">
+                    O LabSystem oferece uma solução centralizada e eficiente para gestão digital, unindo simplicidade e poder.
+                </p>
+            </section>
+            
+        </main>
+
+        <footer class="bg-white p-4 shadow-inner">
+            <div class="container" style="text-align: center; color: #718096; font-size: 0.9em;">
+                &copy; 2025 LabSystem. Todos os direitos reservados.
             </div>
-        </section>
-
-        <section class="mb-10 text-center p-8 bg-lab-green rounded-xl shadow-xl">
-            <p class="text-white text-xl font-semibold">
-                O LabSystem oferece uma solução centralizada, leve e de baixo custo para administrar e exibir informações da loja de forma moderna e integrada.
-            </p>
-        </section>
-        
+        </footer>
     </div>
-
-    <footer class="bg-gray-800 p-6">
-        <div class="container mx-auto text-center text-gray-400">
-            &copy; 2025 LabSystem. Todos os direitos reservados.
-        </div>
-    </footer>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const splashScreen = document.getElementById('splash-screen');
             const mainContent = document.getElementById('main-content');
             
-            // Tempo exato de 2.9 segundos (2900 milissegundos)
-            const splashTime = 2900; 
-
+            // Duração do splash: 2.9 segundos
             setTimeout(() => {
-                // 1. Inicia o fade out do splash
+                // 1. Inicia o fade-out do splash
                 splashScreen.style.opacity = '0';
                 
-                // 2. Após a transição (0.5s), esconde o splash e mostra o conteúdo principal
+                // 2. Após o fade-out, esconde o splash e mostra o conteúdo principal
                 setTimeout(() => {
-                    splashScreen.classList.add('hidden');
-                    mainContent.classList.remove('hidden');
-                }, 500); // 500ms é a duração da transição CSS
+                    splashScreen.style.display = 'none';
+                    mainContent.style.opacity = '1';
+                }, 500); // 500ms é a duração da transição CSS do opacity
                 
-            }, splashTime);
+            }, 2900); // 2900ms = 2.9 segundos
         });
     </script>
 
