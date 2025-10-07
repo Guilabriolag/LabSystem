@@ -1,10 +1,12 @@
 // ====================================================================
 // Serverless-System | TOTEM DIGITAL - LÓGICA PRINCIPAL (script.js)
+// BIN ID CONFIGURADO: 68e36776ae596e708f07b93a
 // ====================================================================
 
 class TotemManager {
     constructor() {
-        this.BIN_ID = '68e36776ae596e708f07b93a'; // ⚠️ ATUALIZE COM SEU BIN ID PÚBLICO!
+        // BIN ID PÚBLICO da Loja
+        this.BIN_ID = '68e36776ae596e708f07b93a'; 
         this.data = null;
         this.cart = []; // { id: 'prod-x', name: 'Product Name', price: 10.00, qty: 1 }
         this.selectedCategory = null; 
@@ -29,22 +31,20 @@ class TotemManager {
             this.updateCartUI();
             this.initYouTubePlayer();
         } else {
-            document.getElementById('products-container').innerHTML = '<div class="text-center p-10 text-red-600 bg-white rounded-xl shadow-xl">❌ Não foi possível carregar os dados da loja. Verifique o BIN ID.</div>';
+            // Este erro só será exibido se a busca falhar (JSONBin fora do ar, Bin privado ou ID realmente errado)
+            document.getElementById('products-container').innerHTML = '<div class="text-center p-10 text-red-600 bg-white rounded-xl shadow-xl">❌ Não foi possível carregar os dados da loja. Verifique o BIN ID, se o Bin está PÚBLICO e se os dados foram publicados.</div>';
         }
     }
 
     async loadRemoteData() {
-        if (!this.BIN_ID || this.BIN_ID === '68e36776ae596e708f07b93a') {
-            console.error('BIN ID não configurado no script.js do Totem.');
-            return;
-        }
-
-        const url = `https://api.jsonbin.io/v3/b/68e36776ae596e708f07b93a/latest`;
+        // A url agora é construída usando o this.BIN_ID
+        const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
         
         try {
             const response = await fetch(url, {
                 method: 'GET',
-                headers: { 'X-Master-Key': '' } // Não precisa de Master Key para LEITURA
+                // Não precisa de Master Key para LEITURA (acesso a Bin Público)
+                headers: { 'X-Master-Key': '' } 
             });
 
             if (response.ok) {
@@ -360,12 +360,19 @@ class TotemManager {
 
     renderCoverageOptions() {
         const selectEl = document.getElementById('client-area');
-        if (!selectEl) return;
+        if (!selectEl || !this.data || !this.data.cobertura) return;
         
         // Mantém a primeira opção de placeholder
         const placeholder = selectEl.querySelector('option[value=""]');
         selectEl.innerHTML = '';
-        selectEl.appendChild(placeholder);
+        if (placeholder) {
+            selectEl.appendChild(placeholder);
+        } else {
+            const defaultPlaceholder = document.createElement('option');
+            defaultPlaceholder.value = '';
+            defaultPlaceholder.textContent = 'Selecione seu Bairro/Área (Taxa)';
+            selectEl.appendChild(defaultPlaceholder);
+        }
         
         this.data.cobertura.forEach(area => {
             const option = document.createElement('option');
@@ -377,7 +384,7 @@ class TotemManager {
 
     renderPaymentOptions() {
         const optionsEl = document.getElementById('payment-options');
-        if (!optionsEl) return;
+        if (!optionsEl || !this.data || !this.data.pagamento) return;
         
         optionsEl.innerHTML = '';
         
@@ -551,7 +558,7 @@ class TotemManager {
     // ====================================================================
 
     initYouTubePlayer() {
-        if (!this.data.customizacao.musicUrl) return;
+        if (!this.data || !this.data.customizacao || !this.data.customizacao.musicUrl) return;
         
         // Esta função global é chamada pelo script do YouTube API
         window.onYouTubeIframeAPIReady = () => {
